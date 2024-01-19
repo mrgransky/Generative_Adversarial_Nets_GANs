@@ -51,7 +51,7 @@ print(opt)
 
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-ngpu: int = torch.cuda.device_count() # 1
+ngpu = torch.cuda.device_count() # 1
 nWorkers: int = os.cpu_count()
 cudnn.benchmark: bool = True
 nz = int(opt.nz) # dimension of the noise vector
@@ -73,6 +73,8 @@ opt.resDIR += f"_display_step_{display_step}"
 opt.resDIR += f"_nWorkers_{nWorkers}"
 
 os.makedirs(opt.resDIR, exist_ok=True)
+
+
 
 if os.path.expanduser('~') == "/users/alijanif":
 	dataset_dir = "/scratch/project_2004072" # scratch folder in my puhti account!
