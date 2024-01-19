@@ -72,9 +72,9 @@ opt.resDIR += f"_ngpu_{ngpu}"
 opt.resDIR += f"_display_step_{display_step}"
 opt.resDIR += f"_nWorkers_{nWorkers}"
 
+print(opt.resDIR)
+
 os.makedirs(opt.resDIR, exist_ok=True)
-
-
 
 if os.path.expanduser('~') == "/users/alijanif":
 	dataset_dir = "/scratch/project_2004072" # scratch folder in my puhti account!
