@@ -13,7 +13,7 @@ elif os.path.expanduser('~') == "/users/alijanif":
 	# nc_files_path = os.path.join(dataset_dir, 'sentinel2-l1c-random-rgb-image')
 elif os.path.expanduser('~') == "/home/ubuntu":
 	dataset_dir = f"{os.getenv('HOME')}/datasets" # Pouta
-	tmp_dir = {os.getenv('HOME')} # home dir MUST BE DELETED!
+	tmp_dir = os.getenv('HOME') # home dir MUST BE DELETED!
 else:
 	print(f"{os.path.expanduser('~')} is Unknown User!")
 	sys.exit(0)
@@ -73,5 +73,5 @@ for nc_zip_url, nc_zip_filename in zip(nc_zip_urls, nc_zip_filenames):
 					os.system(f"cp -v {nc_zip_files_path_google_drive}/{nc_zip_filename} {tmp_dir}/{nc_zip_filename}")
 			print(f"Extracting {tmp_dir}/{nc_zip_filename} to {nc_files_path}")
 			os.system(f"unzip {tmp_dir}/{nc_zip_filename} -d {nc_files_path}")
-			os.system(f"rm {tmp_dir}/{nc_zip_filename}")
+			os.system(f"rm -rfv {tmp_dir}/{nc_zip_filename}")
 			break
