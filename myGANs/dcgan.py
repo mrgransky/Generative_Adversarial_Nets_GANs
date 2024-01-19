@@ -87,7 +87,7 @@ if not os.path.exists(opt.rgbDIR) or len(natsorted( glob.glob( opt.rgbDIR + "/" 
 else:
 	print(f'Already settled with {len(natsorted( glob.glob( opt.rgbDIR + "/" + "*.png" ) ))} RGB images!')
 
-print(f">> Generating a dataloader for {len(natsorted( glob.glob( opt.rgbDIR + "/" + "*.png" ) ))} RGB images...")
+print(f'>> Generating a dataloader for {len(natsorted( glob.glob( opt.rgbDIR + "/" + "*.png" ) ))} RGB images...')
 # custom dataloader
 dataset = Sentinel2Dataset(img_dir=opt.rgbDIR, img_sz=opt.imgSZ)
 dataloader = torch.utils.data.DataLoader(
