@@ -21,6 +21,9 @@ sys.dont_write_bytecode = True
 # in Puhti:
 # python dcgan.py --rgbDIR /scratch/project_2004072/sentinel2-l1c_RGB_IMGs --resDIR /scratch/project_2004072/GANs/misc
 
+# in Puota:
+# python dcgan.py --rgbDIR $HOME/datasets/sentinel2-l1c_RGB_IMGs --resDIR $HOME/trash_logs/GANs/misc
+
 # in Local laptop:
 # python dcgan.py --rgbDIR /home/farid/datasets/sentinel2-l1c_RGB_IMGs --resDIR /home/farid/datasets/GANs_results/misc
 
@@ -49,15 +52,12 @@ nWorkers = 8 # os.cpu_count()
 opt.resDIR += f"_ep{opt.nepochs}_batchSZ_{opt.batchSZ}_imgSZ_{opt.imgSZ}_latent_noise_{opt.nz}_lr_{opt.lr}_hidden_gen_{opt.hidden_dim_gen}_hidden_disc_{opt.hidden_dim_disc}_ngpu_{ngpu}"
 
 os.makedirs(opt.resDIR, exist_ok=True)
-
-if os.path.expanduser('~') == "/home/farid":
-	nc_files_path = os.path.join(os.path.expanduser('~'), 'datasets', 'sentinel2-l1c-random-rgb-image')
-	# rgb_dir = os.path.join(os.path.expanduser('~'), 'datasets', "sentinel2-l1c_RGB_IMGs")
-else:
+if os.path.expanduser('~') == "/users/alijanif":
 	dataset_dir = "/scratch/project_2004072" # scratch folder in my puhti account!
-	tmp_dir = "/scratch/project_2004072/trashes"
 	nc_files_path = os.path.join(dataset_dir, 'sentinel2-l1c-random-rgb-image')
-	# rgb_dir = os.path.join(dataset_dir, "sentinel2-l1c_RGB_IMGs")
+else:	
+	nc_files_path = os.path.join(os.path.expanduser('~'), 'datasets', 'sentinel2-l1c-random-rgb-image')
+
 
 if not os.path.exists(opt.rgbDIR) or len(natsorted( glob.glob( opt.rgbDIR + "/" + "*.png" ) )) < int(1e+4):
 	os.makedirs(opt.rgbDIR)
