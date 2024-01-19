@@ -73,5 +73,5 @@ for nc_zip_url, nc_zip_filename in zip(nc_zip_urls, nc_zip_filenames):
 					os.system(f"cp -v {nc_zip_files_path_google_drive}/{nc_zip_filename} {tmp_dir}/{nc_zip_filename}")
 			print(f"Extracting {tmp_dir}/{nc_zip_filename} to {nc_files_path}")
 			os.system(f"unzip {tmp_dir}/{nc_zip_filename} -d {nc_files_path}")
-			os.system(f"rm -rfv {tmp_dir}/{nc_zip_filename}")
+			# os.system(f"rm -rfv {tmp_dir}/{nc_zip_filename}")
 			break
