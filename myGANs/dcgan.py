@@ -35,8 +35,8 @@ parser.add_argument('--imgSZ', type=int, default=256, help='H & W input images')
 parser.add_argument('--imgNumCh', type=int, default=3, help='Image channel(s), def: 3 RGB')
 parser.add_argument('--nz', type=int, default=100, help='noise latent z vector size')
 
-parser.add_argument('--hidden_dim_gen', type=int, default=256)
-parser.add_argument('--hidden_dim_disc', type=int, default=256)
+parser.add_argument('--feature_g', type=int, default=256)
+parser.add_argument('--feature_d', type=int, default=256)
 
 parser.add_argument('--nepochs', type=int, default=2, help='number of epochs to train for')
 parser.add_argument('--lr', type=float, default=2e-4, help='learning rate')
@@ -47,17 +47,38 @@ parser.add_argument('--rgbDIR', required=True, help='path to RGB dataset')
 
 opt = parser.parse_args()
 print(opt)
-ngpu = torch.cuda.device_count() # 1
-nWorkers = 8 # os.cpu_count()
-opt.resDIR += f"_ep{opt.nepochs}_batchSZ_{opt.batchSZ}_imgSZ_{opt.imgSZ}_latent_noise_{opt.nz}_lr_{opt.lr}_hidden_gen_{opt.hidden_dim_gen}_hidden_disc_{opt.hidden_dim_disc}_ngpu_{ngpu}"
+
+
+
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+ngpu: int = torch.cuda.device_count() # 1
+nWorkers: int = os.cpu_count()
+cudnn.benchmark: bool = True
+nz = int(opt.nz) # dimension of the noise vector
+feature_g = int(opt.feature_g)
+feature_d = int(opt.feature_d)
+nCh = int(opt.imgNumCh)
+display_step: int = 500
+
+opt.resDIR += f"_epoch_{opt.nepochs}"
+opt.resDIR += f"_batch_SZ_{opt.batchSZ}"
+opt.resDIR += f"_img_SZ_{opt.imgSZ}"
+opt.resDIR += f"_latent_noise_SZ_{opt.nz}"
+opt.resDIR += f"_lr_{opt.lr}"
+opt.resDIR += f"_feature_g_{opt.feature_g}"
+opt.resDIR += f"_feature_d_{opt.feature_d}"
+opt.resDIR += f"_device_{device}"
+opt.resDIR += f"_ngpu_{ngpu}"
+opt.resDIR += f"_display_step_{display_step}"
+opt.resDIR += f"_nWorkers_{nWorkers}"
 
 os.makedirs(opt.resDIR, exist_ok=True)
+
 if os.path.expanduser('~') == "/users/alijanif":
 	dataset_dir = "/scratch/project_2004072" # scratch folder in my puhti account!
 	nc_files_path = os.path.join(dataset_dir, 'sentinel2-l1c-random-rgb-image')
 else:	
 	nc_files_path = os.path.join(os.path.expanduser('~'), 'datasets', 'sentinel2-l1c-random-rgb-image')
-
 
 if not os.path.exists(opt.rgbDIR) or len(natsorted( glob.glob( opt.rgbDIR + "/" + "*.png" ) )) < int(1e+4):
 	os.makedirs(opt.rgbDIR)
@@ -77,13 +98,6 @@ dataloader = torch.utils.data.DataLoader(
 )
 print(len(dataloader), type(dataloader), dataloader)
 
-device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-cudnn.benchmark = True
-nz = int(opt.nz) # dimension of the noise vector
-hidden_dim_gen = int(opt.hidden_dim_gen)
-hidden_dim_disc = int(opt.hidden_dim_disc)
-nCh = int(opt.imgNumCh)
-
 def weights_init(m): # zero-centered Normal distribution with std 0.02.
 	if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
 		torch.nn.init.normal_(tensor=m.weight, mean=0.0, std=0.02)
@@ -97,32 +111,32 @@ class Generator(nn.Module):
 		self.ngpu = ngpu
 		self.main = nn.Sequential(
 			
-			nn.ConvTranspose2d(in_channels=nz, out_channels=hidden_dim_gen * 8, kernel_size=4, stride=1, padding=0, bias=False),
-			nn.BatchNorm2d(num_features=hidden_dim_gen * 8),
+			nn.ConvTranspose2d(in_channels=nz, out_channels=feature_g * 8, kernel_size=4, stride=1, padding=0, bias=False),
+			nn.BatchNorm2d(num_features=feature_g * 8),
 			nn.ReLU(inplace=True),
 
-			nn.ConvTranspose2d(in_channels=hidden_dim_gen * 8, out_channels=hidden_dim_gen * 4, kernel_size=4, stride=2, padding=1, bias=False),
-			nn.BatchNorm2d(num_features=hidden_dim_gen * 4),
+			nn.ConvTranspose2d(in_channels=feature_g * 8, out_channels=feature_g * 4, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.BatchNorm2d(num_features=feature_g * 4),
 			nn.ReLU(inplace=True),
 			
-			nn.ConvTranspose2d(in_channels=hidden_dim_gen * 4, out_channels=hidden_dim_gen * 2, kernel_size=4, stride=2, padding=1, bias=False),
-			nn.BatchNorm2d(num_features=hidden_dim_gen * 2),
+			nn.ConvTranspose2d(in_channels=feature_g * 4, out_channels=feature_g * 2, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.BatchNorm2d(num_features=feature_g * 2),
 			nn.ReLU(inplace=True),
 			
-			nn.ConvTranspose2d(in_channels=hidden_dim_gen * 2, out_channels=hidden_dim_gen, kernel_size=4, stride=2, padding=1, bias=False),
-			nn.BatchNorm2d(num_features=hidden_dim_gen),
+			nn.ConvTranspose2d(in_channels=feature_g * 2, out_channels=feature_g, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.BatchNorm2d(num_features=feature_g),
 			nn.ReLU(inplace=True),
 
-			nn.ConvTranspose2d(in_channels=hidden_dim_gen, out_channels=hidden_dim_gen, kernel_size=4, stride=2, padding=1, bias=False),
-			nn.BatchNorm2d(num_features=hidden_dim_gen),
+			nn.ConvTranspose2d(in_channels=feature_g, out_channels=feature_g, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.BatchNorm2d(num_features=feature_g),
 			nn.ReLU(inplace=True),
 			
-			nn.ConvTranspose2d(in_channels=hidden_dim_gen, out_channels=hidden_dim_gen, kernel_size=4, stride=2, padding=1, bias=False),
-			nn.BatchNorm2d(num_features=hidden_dim_gen),
+			nn.ConvTranspose2d(in_channels=feature_g, out_channels=feature_g, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.BatchNorm2d(num_features=feature_g),
 			nn.ReLU(inplace=True),
 
-			nn.ConvTranspose2d(in_channels=hidden_dim_gen, out_channels=nCh, kernel_size=4, stride=2, padding=1, bias=False),
-			nn.Tanh()
+			nn.ConvTranspose2d(in_channels=feature_g, out_channels=nCh, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.Tanh() # output normalized to [-1, 1]
 
 		)
 	def forward(self, input):
@@ -138,22 +152,22 @@ class Discriminator(nn.Module):
 		self.ngpu = ngpu
 		self.main = nn.Sequential(
 
-			nn.Conv2d(in_channels=nCh, out_channels=hidden_dim_disc, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.Conv2d(in_channels=nCh, out_channels=feature_d, kernel_size=4, stride=2, padding=1, bias=False),
 			nn.LeakyReLU(negative_slope=0.2, inplace=True),
 
-			nn.Conv2d(in_channels=hidden_dim_disc, out_channels=hidden_dim_disc * 2, kernel_size=4, stride=2, padding=1, bias=False),
-			nn.BatchNorm2d(num_features=hidden_dim_disc * 2),
+			nn.Conv2d(in_channels=feature_d, out_channels=feature_d * 2, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.BatchNorm2d(num_features=feature_d * 2),
 			nn.LeakyReLU(negative_slope=0.2, inplace=True),
 
-			nn.Conv2d(in_channels=hidden_dim_disc * 2, out_channels=hidden_dim_disc * 4, kernel_size=4, stride=2, padding=1, bias=False),
-			nn.BatchNorm2d(num_features=hidden_dim_disc * 4),
+			nn.Conv2d(in_channels=feature_d * 2, out_channels=feature_d * 4, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.BatchNorm2d(num_features=feature_d * 4),
 			nn.LeakyReLU(negative_slope=0.2, inplace=True),
 
-			nn.Conv2d(in_channels=hidden_dim_disc * 4, out_channels=hidden_dim_disc * 8, kernel_size=4, stride=2, padding=1, bias=False),
-			nn.BatchNorm2d(num_features=hidden_dim_disc * 8),
+			nn.Conv2d(in_channels=feature_d * 4, out_channels=feature_d * 8, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.BatchNorm2d(num_features=feature_d * 8),
 			nn.LeakyReLU(negative_slope=0.2, inplace=True),
 
-			nn.Conv2d(in_channels=hidden_dim_disc * 8, out_channels=1, kernel_size=4, stride=1, padding=0, bias=False),
+			nn.Conv2d(in_channels=feature_d * 8, out_channels=1, kernel_size=4, stride=1, padding=0, bias=False),
 			nn.Sigmoid() # final probability through a Sigmoid activation function
 
 		)
@@ -186,7 +200,6 @@ optimizerG = optim.Adam(netG.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
 
 mean_generator_loss = 0
 mean_discriminator_loss = 0
-display_step = 500
 cur_step = 0
 disc_losses = list()
 gen_losses = list()

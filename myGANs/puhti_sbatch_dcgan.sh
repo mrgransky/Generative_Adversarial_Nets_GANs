@@ -7,11 +7,11 @@
 #SBATCH --mail-type=END,FAIL
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=1
-#SBATCH --mem=12G
+#SBATCH --cpus-per-task=10
+#SBATCH --mem=10G
 #SBATCH --partition=gpu
 #SBATCH --time=03-00:00:00
-#SBATCH --gres=gpu:v100:1
+#SBATCH --gres=gpu:v100:4
 
 user="`whoami`"
 stars=$(printf '%*s' 100 '')
@@ -33,7 +33,7 @@ echo "<> Using $SLURM_CLUSTER_NAME conda env from tykky module..."
 resultsDIR="/scratch/project_2004072/GANs/misc" ########## must be adjusted! ##########
 datasetDIR="/scratch/project_2004072/sentinel2-l1c_RGB_IMGs"
 
-python -u dcgan.py --rgbDIR $datasetDIR --resDIR $resultsDIR --nepochs 150
+python -u dcgan.py --rgbDIR $datasetDIR --resDIR $resultsDIR --nepochs 250
 
 done_txt="$user finished Slurm job: `date`"
 echo -e "${done_txt//?/$ch}\n${done_txt}\n${done_txt//?/$ch}"
