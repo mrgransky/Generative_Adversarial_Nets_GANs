@@ -11,7 +11,7 @@ elif os.path.expanduser('~') == "/users/alijanif":
 	dataset_dir = "/scratch/project_2004072" # scratch folder in my puhti account!
 	tmp_dir = "/scratch/project_2004072/trashes"
 	# nc_files_path = os.path.join(dataset_dir, 'sentinel2-l1c-random-rgb-image')
-elif os.path.expanduser('~') == "/users/alijanif":
+elif os.path.expanduser('~') == "/home/ubuntu":
 	dataset_dir = f"{os.getenv('HOME')}/datasets" # Pouta
 	tmp_dir = {os.getenv('HOME')} # home dir MUST BE DELETED!
 else:
