@@ -66,6 +66,7 @@ if not os.path.exists(opt.rgbDIR) or len(natsorted( glob.glob( opt.rgbDIR + "/" 
 else:
 	print(f'Already settled with {len(natsorted( glob.glob( opt.rgbDIR + "/" + "*.png" ) ))} RGB images!')
 
+print(f">> Generating a dataloader for {len(natsorted( glob.glob( opt.rgbDIR + "/" + "*.png" ) ))} RGB images...")
 # custom dataloader
 dataset = Sentinel2Dataset(img_dir=opt.rgbDIR, img_sz=opt.imgSZ)
 dataloader = torch.utils.data.DataLoader(
@@ -74,11 +75,9 @@ dataloader = torch.utils.data.DataLoader(
 	shuffle=True, 
 	num_workers=nWorkers,
 )
-
 print(len(dataloader), type(dataloader), dataloader)
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-
 cudnn.benchmark = True
 nz = int(opt.nz) # dimension of the noise vector
 hidden_dim_gen = int(opt.hidden_dim_gen)
