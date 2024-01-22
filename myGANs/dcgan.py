@@ -44,7 +44,7 @@ parser.add_argument('--lr', type=float, default=2e-4, help='learning rate')
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
 
 parser.add_argument('--spectralNormGen', type=bool, default=False, help='Spectrally Normalized Generator')
-parser.add_argument('--spectralNormDisc', type=bool, default=False, help='Spectrally Normalized Discriminator')
+parser.add_argument('--spectralNormDisc', type=bool, default=True, help='Spectrally Normalized Discriminator')
 
 parser.add_argument('--resDIR', required=True, help='folder to output images and model checkpoints')
 parser.add_argument('--rgbDIR', required=True, help='path to RGB dataset')
