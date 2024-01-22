@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --account=project_2004072
-#SBATCH --job-name=dcgan_epoch_large
+#SBATCH --job-name=sngan_disc_gen
 #SBATCH --output=/scratch/project_2004072/GANs/trash/GANs_logs/%x_%N_%j.out
 #SBATCH --mail-user=farid.alijani@gmail.com
 #SBATCH --mail-type=END,FAIL
@@ -30,14 +30,15 @@ echo "THREADS/CORE: $SLURM_THREADS_PER_CORE"
 echo "${stars// /*}"
 echo "<> Using $SLURM_CLUSTER_NAME conda env from tykky module..."
 
-resultsDIR="/scratch/project_2004072/GANs/misc" ########## must be adjusted! ##########
 datasetDIR="/scratch/project_2004072/sentinel2-l1c_RGB_IMGs"
+resultsDIR="/scratch/project_2004072/GANs/misc_sngan" ########## must be adjusted! ##########
 
 python -u dcgan.py \
           --rgbDIR $datasetDIR \
           --resDIR $resultsDIR \
           --nepochs 200 \
-          --batchSZ 16
+          --batchSZ 16 \
+          --spectral_norm True
 
 done_txt="$user finished Slurm job: `date`"
 echo -e "${done_txt//?/$ch}\n${done_txt}\n${done_txt//?/$ch}"
