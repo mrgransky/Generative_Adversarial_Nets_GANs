@@ -55,8 +55,6 @@ print(opt)
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 cudnn.benchmark: bool = True
 nz = int(opt.nz) # dimension of the noise vector
-feature_g = int(opt.feature_g)
-feature_d = int(opt.feature_d)
 nCh = int(opt.imgNumCh)
 display_step: int = 100
 
@@ -109,7 +107,7 @@ dataloader = torch.utils.data.DataLoader(
 )
 print(len(dataloader), type(dataloader), dataloader)
 
-print(f"Generator [spectral_norm: {opt.spectralNormGen}]".center(100, "-"))
+print(f"Generator [spectral_norm: {opt.spectralNormGen}]".center(120, "-"))
 netG = Generator(
 	ngpu=torch.cuda.device_count(), 
 	nz=int(opt.nz), 
@@ -120,7 +118,7 @@ netG = Generator(
 netG.apply(weights_init)
 print(netG)
 
-print(f"Discriminator [spectral_norm: {opt.spectralNormDisc}]".center(100, "-"))
+print(f"Discriminator [spectral_norm: {opt.spectralNormDisc}]".center(120, "-"))
 netD = Discriminator(
 	ngpu=torch.cuda.device_count(), 
 	feature_d=int(opt.feature_d), 
@@ -139,7 +137,6 @@ optimizerG = torch.optim.Adam(netG.parameters(), lr=opt.lr, betas=(opt.beta1, 0.
 
 mean_generator_loss = 0
 mean_discriminator_loss = 0
-cur_step = 0
 disc_losses = list()
 gen_losses = list()
 
