@@ -142,7 +142,7 @@ cur_step = 0
 disc_losses = list()
 gen_losses = list()
 
-print(f"Training with {torch.cuda.device_count()} GPU(s) & {numWorkers} CPU core(s)".center(100, " "))
+print(f"Training with {torch.cuda.device_count()} GPU(s) & {opt.numWorkers} CPU core(s)".center(100, " "))
 for epoch in range(opt.nepochs):
 	for batch_idx, batch_images in enumerate(dataloader):
 		# print(epoch, batch_idx, type(batch_images), batch_images.shape)
