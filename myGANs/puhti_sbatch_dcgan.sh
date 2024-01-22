@@ -29,20 +29,18 @@ echo "nTASKS/CORE: $SLURM_NTASKS_PER_CORE, nTASKS/NODE: $SLURM_NTASKS_PER_NODE"
 echo "THREADS/CORE: $SLURM_THREADS_PER_CORE"
 echo "${stars// /*}"
 echo "<> Using $SLURM_CLUSTER_NAME conda env from tykky module..."
-num_cpu_cores=$(nproc --all)
-echo "Number of CPU core(s): $num_cpu_cores"
 
 datasetDIR="/scratch/project_2004072/sentinel2-l1c_RGB_IMGs"
 resultsDIR="/scratch/project_2004072/GANs/misc_sngan" ########## must be adjusted! ##########
 
 python -u dcgan.py \
-          --rgbDIR $datasetDIR \
-          --resDIR $resultsDIR \
-          --nepochs 200 \
-          --batchSZ 16 \
-          --numWorkers $num_cpu_cores \
-          --spectralNormGen "False" \
-          --spectralNormDisc "True"
+					--rgbDIR $datasetDIR \
+					--resDIR $resultsDIR \
+					--nepochs 200 \
+					--batchSZ 16 \
+					--numWorkers $SLURM_CPUS_PER_TASK \
+					--spectralNormGen false \
+					--spectralNormDisc true
 
 done_txt="$user finished Slurm job: `date`"
 echo -e "${done_txt//?/$ch}\n${done_txt}\n${done_txt//?/$ch}"

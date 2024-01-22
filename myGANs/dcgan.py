@@ -104,7 +104,7 @@ dataloader = torch.utils.data.DataLoader(
 	dataset=dataset, 
 	batch_size=opt.batchSZ, 
 	shuffle=True, 
-	num_workers=numWorkers,
+	num_workers=opt.numWorkers,
 )
 print(len(dataloader), type(dataloader), dataloader)
 
