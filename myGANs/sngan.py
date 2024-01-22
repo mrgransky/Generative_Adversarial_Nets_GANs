@@ -2,21 +2,21 @@ import argparse
 import os
 import sys
 import random
-
 import torch
+import torch.nn as nn
+import torch.nn.parallel
 import torch.backends.cudnn as cudnn
+import torch.optim as optim
 import torch.utils.data
+import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
-
 from dataloader import *
 from utils import *
-from networks import *
 ##################################################
 # avoid __pycache__ # DON NOT DELETE THIS LINE!!!!
 sys.dont_write_bytecode = True 
 ##################################################
-
 # how to run:
 # in Puhti:
 # python dcgan.py --rgbDIR /scratch/project_2004072/sentinel2-l1c_RGB_IMGs --resDIR /scratch/project_2004072/GANs/misc
@@ -49,6 +49,7 @@ opt = parser.parse_args()
 print(opt)
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+ngpu = torch.cuda.device_count() # 1
 nWorkers: int = 8 #os.cpu_count()
 cudnn.benchmark: bool = True
 nz = int(opt.nz) # dimension of the noise vector
@@ -65,7 +66,7 @@ opt.resDIR += f"_lr_{opt.lr}"
 opt.resDIR += f"_feature_g_{opt.feature_g}"
 opt.resDIR += f"_feature_d_{opt.feature_d}"
 opt.resDIR += f"_device_{device}"
-opt.resDIR += f"_ngpu_{torch.cuda.device_count()}"
+opt.resDIR += f"_ngpu_{ngpu}"
 opt.resDIR += f"_display_step_{display_step}"
 opt.resDIR += f"_nWorkers_{nWorkers}"
 
@@ -100,31 +101,105 @@ dataloader = torch.utils.data.DataLoader(
 )
 print(len(dataloader), type(dataloader), dataloader)
 
-netG = Generator(
-	ngpu=torch.cuda.device_count(), 
-	nz=int(opt.nz), 
-	feature_g=int(opt.feature_g), 
-	nCh=int(opt.imgNumCh),
-).to(device)
+def weights_init(m): # zero-centered Normal distribution with std 0.02.
+	if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+		torch.nn.init.normal_(tensor=m.weight, mean=0.0, std=0.02)
+	if isinstance(m, nn.BatchNorm2d):
+		torch.nn.init.normal_(tensor=m.weight, mean=0.0, std=0.02)
+		torch.nn.init.constant_(m.bias, 0)
+
+class Generator(nn.Module):
+	def __init__(self, ngpu):
+		super(Generator, self).__init__()
+		self.ngpu = ngpu
+		self.main = nn.Sequential(
+			
+			nn.ConvTranspose2d(in_channels=nz, out_channels=feature_g * 8, kernel_size=4, stride=1, padding=0, bias=False),
+			nn.BatchNorm2d(num_features=feature_g * 8),
+			nn.ReLU(inplace=True),
+
+			nn.ConvTranspose2d(in_channels=feature_g * 8, out_channels=feature_g * 4, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.BatchNorm2d(num_features=feature_g * 4),
+			nn.ReLU(inplace=True),
+			
+			nn.ConvTranspose2d(in_channels=feature_g * 4, out_channels=feature_g * 2, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.BatchNorm2d(num_features=feature_g * 2),
+			nn.ReLU(inplace=True),
+			
+			nn.ConvTranspose2d(in_channels=feature_g * 2, out_channels=feature_g, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.BatchNorm2d(num_features=feature_g),
+			nn.ReLU(inplace=True),
+
+			nn.ConvTranspose2d(in_channels=feature_g, out_channels=feature_g, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.BatchNorm2d(num_features=feature_g),
+			nn.ReLU(inplace=True),
+			
+			nn.ConvTranspose2d(in_channels=feature_g, out_channels=feature_g, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.BatchNorm2d(num_features=feature_g),
+			nn.ReLU(inplace=True),
+
+			nn.ConvTranspose2d(in_channels=feature_g, out_channels=nCh, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.Tanh() # output normalized to [-1, 1]
+
+		)
+	def forward(self, input):
+		if input.is_cuda and self.ngpu > 1:
+			output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
+		else:
+			output = self.main(input) # [nb, ch, 256, 256]
+		return output
+
+class Discriminator(nn.Module):
+	def __init__(self, ngpu):
+		super(Discriminator, self).__init__()
+		self.ngpu = ngpu
+		self.main = nn.Sequential(
+
+			nn.Conv2d(in_channels=nCh, out_channels=feature_d, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.LeakyReLU(negative_slope=0.2, inplace=True),
+
+			nn.Conv2d(in_channels=feature_d, out_channels=feature_d * 2, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.BatchNorm2d(num_features=feature_d * 2),
+			nn.LeakyReLU(negative_slope=0.2, inplace=True),
+
+			nn.Conv2d(in_channels=feature_d * 2, out_channels=feature_d * 4, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.BatchNorm2d(num_features=feature_d * 4),
+			nn.LeakyReLU(negative_slope=0.2, inplace=True),
+
+			nn.Conv2d(in_channels=feature_d * 4, out_channels=feature_d * 8, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.BatchNorm2d(num_features=feature_d * 8),
+			nn.LeakyReLU(negative_slope=0.2, inplace=True),
+
+			nn.Conv2d(in_channels=feature_d * 8, out_channels=1, kernel_size=4, stride=1, padding=0, bias=False),
+			nn.Sigmoid() # final probability through a Sigmoid activation function
+
+		)
+	def forward(self, input):
+		if input.is_cuda and self.ngpu > 1:
+			output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
+		else:
+			output = self.main(input)
+			# print(f"desc: forward: raw: {output.shape}")
+			# print(f"desc: forward: raw.view(-1, 1): {output.view(-1, 1).shape}")
+			# print(f"desc: forward: raw.view(-1, 1).squeeze(1): {output.view(-1, 1).squeeze(1).shape}")
+		return output.view(-1, 1).squeeze(1) # Removes singleton dimension (dimension with size 1)
+
+netG = Generator(ngpu).to(device)
 netG.apply(weights_init)
 print(f"Generator".center(100, "-"))
 print(netG)
 
-netD = Discriminator(
-	ngpu=torch.cuda.device_count(), 
-	feature_d=int(opt.feature_d), 
-	nCh=int(opt.imgNumCh),
-).to(device)
+netD = Discriminator(ngpu=ngpu).to(device)
 netD.apply(weights_init)
 print(f"Discriminator".center(100, "-"))
 print(netD)
 
 # loss fcn: since we have sigmoid at the final layer of Discriminator
-criterion = torch.nn.BCELoss()
+criterion = nn.BCELoss()
 
 # optimizer
-optimizerD = torch.optim.Adam(netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
-optimizerG = torch.optim.Adam(netG.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
+optimizerD = optim.Adam(netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
+optimizerG = optim.Adam(netG.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
 
 mean_generator_loss = 0
 mean_discriminator_loss = 0
@@ -132,7 +207,7 @@ cur_step = 0
 disc_losses = list()
 gen_losses = list()
 
-print(f"Training with {torch.cuda.device_count()} GPU(s) & {nWorkers} CPU core(s)".center(100, " "))
+print(f"Training with {ngpu} GPU(s) & {nWorkers} CPU core(s)".center(100, " "))
 for epoch in range(opt.nepochs):
 	for batch_idx, batch_images in enumerate(dataloader):
 		# print(epoch, batch_idx, type(batch_images), batch_images.shape)
