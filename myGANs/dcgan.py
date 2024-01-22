@@ -41,7 +41,7 @@ parser.add_argument('--feature_d', type=int, default=256)
 parser.add_argument('--nepochs', type=int, default=2, help='number of epochs to train for')
 parser.add_argument('--lr', type=float, default=2e-4, help='learning rate')
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
-parser.add_argument('--spectral_norm', type=bool, default=False, help='Spectrally Normalized GAN')
+parser.add_argument('--spectralNormGen', type=bool, default=False, help='Spectrally Normalized GAN')
 
 parser.add_argument('--resDIR', required=True, help='folder to output images and model checkpoints')
 parser.add_argument('--rgbDIR', required=True, help='path to RGB dataset')
@@ -69,8 +69,11 @@ opt.resDIR += f"_device_{device}"
 opt.resDIR += f"_ngpu_{torch.cuda.device_count()}"
 opt.resDIR += f"_display_step_{display_step}"
 opt.resDIR += f"_nWorkers_{nWorkers}"
-if opt.spectral_norm:
-	opt.resDIR += f"_spectral_norm_{opt.spectral_norm}"
+if opt.spectralNormGen:
+	opt.resDIR += f"_spectralNormGen_{opt.spectralNormGen}"
+
+if opt.spectralNormDisc:
+	opt.resDIR += f"_spectralNormDisc_{opt.spectralNormDisc}"
 
 checkponts_dir = os.path.join(opt.resDIR, "checkpoints")
 
@@ -108,7 +111,7 @@ netG = Generator(
 	nz=int(opt.nz), 
 	feature_g=int(opt.feature_g), 
 	nCh=int(opt.imgNumCh),
-	spectral_norm = opt.spectral_norm,
+	spectral_norm = opt.spectralNormGen,
 ).to(device)
 netG.apply(weights_init)
 print(f"Generator".center(100, "-"))
@@ -118,7 +121,7 @@ netD = Discriminator(
 	ngpu=torch.cuda.device_count(), 
 	feature_d=int(opt.feature_d), 
 	nCh=int(opt.imgNumCh),
-	spectral_norm = opt.spectral_norm,
+	spectral_norm = opt.spectralNormDisc,
 ).to(device)
 netD.apply(weights_init)
 print(f"Discriminator".center(100, "-"))
