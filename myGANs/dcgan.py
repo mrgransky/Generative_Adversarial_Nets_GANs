@@ -30,7 +30,7 @@ sys.dont_write_bytecode = True
 # DCGAN ref link: https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html#introduction
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--numWorkers', type=int, default=4, help='number of cpu core(s)')
+parser.add_argument('--numWorkers', type=int, default=16, help='number of cpu core(s)')
 parser.add_argument('--batchSZ', type=int, default=4, help='input batch size')
 parser.add_argument('--imgSZ', type=int, default=256, help='H & W input images') # can't change now!!
 parser.add_argument('--imgNumCh', type=int, default=3, help='Image channel(s), def: 3 RGB')
@@ -42,6 +42,7 @@ parser.add_argument('--feature_d', type=int, default=256)
 parser.add_argument('--nepochs', type=int, default=2, help='number of epochs to train for')
 parser.add_argument('--lr', type=float, default=2e-4, help='learning rate')
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
+
 parser.add_argument('--spectralNormGen', type=bool, default=False, help='Spectrally Normalized Generator')
 parser.add_argument('--spectralNormDisc', type=bool, default=False, help='Spectrally Normalized Discriminator')
 
@@ -108,6 +109,7 @@ dataloader = torch.utils.data.DataLoader(
 )
 print(len(dataloader), type(dataloader), dataloader)
 
+print(f"Generator [spectral_norm: {opt.spectralNormGen}]".center(100, "-"))
 netG = Generator(
 	ngpu=torch.cuda.device_count(), 
 	nz=int(opt.nz), 
@@ -116,9 +118,9 @@ netG = Generator(
 	spectral_norm = opt.spectralNormGen,
 ).to(device)
 netG.apply(weights_init)
-print(f"Generator".center(100, "-"))
 print(netG)
 
+print(f"Discriminator [spectral_norm: {opt.spectralNormDisc}]".center(100, "-"))
 netD = Discriminator(
 	ngpu=torch.cuda.device_count(), 
 	feature_d=int(opt.feature_d), 
@@ -126,7 +128,6 @@ netD = Discriminator(
 	spectral_norm = opt.spectralNormDisc,
 ).to(device)
 netD.apply(weights_init)
-print(f"Discriminator".center(100, "-"))
 print(netD)
 
 # loss fcn: since we have sigmoid at the final layer of Discriminator
