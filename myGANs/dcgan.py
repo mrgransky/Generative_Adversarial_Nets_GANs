@@ -41,7 +41,8 @@ parser.add_argument('--feature_d', type=int, default=256)
 parser.add_argument('--nepochs', type=int, default=2, help='number of epochs to train for')
 parser.add_argument('--lr', type=float, default=2e-4, help='learning rate')
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
-parser.add_argument('--spectralNormGen', type=bool, default=False, help='Spectrally Normalized GAN')
+parser.add_argument('--spectralNormGen', type=bool, default=False, help='Spectrally Normalized Generator')
+parser.add_argument('--spectralNormDisc', type=bool, default=False, help='Spectrally Normalized Discriminator')
 
 parser.add_argument('--resDIR', required=True, help='folder to output images and model checkpoints')
 parser.add_argument('--rgbDIR', required=True, help='path to RGB dataset')
@@ -69,6 +70,7 @@ opt.resDIR += f"_device_{device}"
 opt.resDIR += f"_ngpu_{torch.cuda.device_count()}"
 opt.resDIR += f"_display_step_{display_step}"
 opt.resDIR += f"_nWorkers_{nWorkers}"
+
 if opt.spectralNormGen:
 	opt.resDIR += f"_spectralNormGen_{opt.spectralNormGen}"
 
