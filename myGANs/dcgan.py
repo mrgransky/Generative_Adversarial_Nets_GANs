@@ -48,17 +48,15 @@ parser.add_argument('--rgbDIR', required=True, help='path to RGB dataset')
 opt = parser.parse_args()
 print(opt)
 
-
-
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 ngpu = torch.cuda.device_count() # 1
-nWorkers: int = os.cpu_count()
+nWorkers: int = 8 #os.cpu_count()
 cudnn.benchmark: bool = True
 nz = int(opt.nz) # dimension of the noise vector
 feature_g = int(opt.feature_g)
 feature_d = int(opt.feature_d)
 nCh = int(opt.imgNumCh)
-display_step: int = 500
+display_step: int = 100
 
 opt.resDIR += f"_epoch_{opt.nepochs}"
 opt.resDIR += f"_batch_SZ_{opt.batchSZ}"
@@ -72,9 +70,12 @@ opt.resDIR += f"_ngpu_{ngpu}"
 opt.resDIR += f"_display_step_{display_step}"
 opt.resDIR += f"_nWorkers_{nWorkers}"
 
+checkponts_dir = os.path.join(opt.resDIR, "checkpoints")
+
 print(opt.resDIR)
 
 os.makedirs(opt.resDIR, exist_ok=True)
+os.makedirs(checkponts_dir, exist_ok=True)
 
 if os.path.expanduser('~') == "/users/alijanif":
 	dataset_dir = "/scratch/project_2004072" # scratch folder in my puhti account!
@@ -263,7 +264,8 @@ for epoch in range(opt.nepochs):
 			vutils.save_image(fake.detach(), os.path.join(opt.resDIR, f"fake_samples_ep_{epoch+1}_batchIDX_{batch_idx}.png"), normalize=True)
 			mean_generator_loss = 0
 			mean_discriminator_loss = 0
-	torch.save(netG.state_dict(), '%s/netG_epoch_%d.pth' % (opt.resDIR, epoch))
-	torch.save(netD.state_dict(), '%s/netD_epoch_%d.pth' % (opt.resDIR, epoch))
+	
+	torch.save(netG.state_dict(), os.path.join(checkponts_dir, f"generator_ep_{epoch}.pth"))
+	torch.save(netD.state_dict(), os.path.join(checkponts_dir, f"discriminator_ep_{epoch}.pth"))
 
 plot_losses(disc_losses=disc_losses, gen_losses=gen_losses, saveDIR=opt.resDIR)
