@@ -30,6 +30,7 @@ sys.dont_write_bytecode = True
 # DCGAN ref link: https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html#introduction
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--numWorkers', type=int, default=4, help='number of cpu core(s)')
 parser.add_argument('--batchSZ', type=int, default=4, help='input batch size')
 parser.add_argument('--imgSZ', type=int, default=256, help='H & W input images') # can't change now!!
 parser.add_argument('--imgNumCh', type=int, default=3, help='Image channel(s), def: 3 RGB')
@@ -51,7 +52,6 @@ opt = parser.parse_args()
 print(opt)
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-nWorkers: int = 8 #os.cpu_count()
 cudnn.benchmark: bool = True
 nz = int(opt.nz) # dimension of the noise vector
 feature_g = int(opt.feature_g)
@@ -69,7 +69,7 @@ opt.resDIR += f"_feature_d_{opt.feature_d}"
 opt.resDIR += f"_device_{device}"
 opt.resDIR += f"_ngpu_{torch.cuda.device_count()}"
 opt.resDIR += f"_display_step_{display_step}"
-opt.resDIR += f"_nWorkers_{nWorkers}"
+opt.resDIR += f"_numWorkers_{opt.numWorkers}"
 
 if opt.spectralNormGen:
 	opt.resDIR += f"_spectralNormGen_{opt.spectralNormGen}"
@@ -104,7 +104,7 @@ dataloader = torch.utils.data.DataLoader(
 	dataset=dataset, 
 	batch_size=opt.batchSZ, 
 	shuffle=True, 
-	num_workers=nWorkers,
+	num_workers=numWorkers,
 )
 print(len(dataloader), type(dataloader), dataloader)
 
@@ -142,7 +142,7 @@ cur_step = 0
 disc_losses = list()
 gen_losses = list()
 
-print(f"Training with {torch.cuda.device_count()} GPU(s) & {nWorkers} CPU core(s)".center(100, " "))
+print(f"Training with {torch.cuda.device_count()} GPU(s) & {numWorkers} CPU core(s)".center(100, " "))
 for epoch in range(opt.nepochs):
 	for batch_idx, batch_images in enumerate(dataloader):
 		# print(epoch, batch_idx, type(batch_images), batch_images.shape)
