@@ -128,10 +128,10 @@ class Generator(nn.Module):
 			nn.Tanh()  # output normalized to [-1, 1]
 		]
 
-	if self.spectral_norm:
-		layers = [nn.utils.spectral_norm(layer) if isinstance(layer, nn.Conv2d) else layer for layer in layers]
+		if self.spectral_norm:
+			layers = [nn.utils.spectral_norm(layer) if isinstance(layer, nn.Conv2d) else layer for layer in layers]
 
-	self.main = nn.Sequential(*layers)
+		self.main = nn.Sequential(*layers)
 
 	def forward(self, input):
 		if input.is_cuda and self.ngpu > 1:
@@ -167,7 +167,7 @@ class Discriminator(nn.Module):
 		]
 
 		if self.spectral_norm:
-			layers = [nn.utils.spectral_norm(layer) if isinstance(layer, nn.Conv2d) else layer for layer in layers]
+				layers = [nn.utils.spectral_norm(layer) if isinstance(layer, nn.Conv2d) else layer for layer in layers]
 
 		self.main = nn.Sequential(*layers)
 
