@@ -39,8 +39,9 @@ python -u dcgan.py \
 					--nepochs 200 \
 					--batchSZ 16 \
 					--numWorkers $SLURM_CPUS_PER_TASK \
-					--spectralNormDisc true
-
+					--spectralNormDisc=true \
+					--spectralNormGen=false
+					
 done_txt="$user finished Slurm job: `date`"
 echo -e "${done_txt//?/$ch}\n${done_txt}\n${done_txt//?/$ch}"
 # echo "${stars// /*}"
