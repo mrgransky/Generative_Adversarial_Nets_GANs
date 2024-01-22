@@ -38,8 +38,6 @@ python -u dcgan.py \
 					--resDIR $resultsDIR \
 					--nepochs 200 \
 					--batchSZ 16 \
-					--spectralNormDisc=true \
-					--spectralNormGen=false \
 					--numWorkers $SLURM_CPUS_PER_TASK
 					
 done_txt="$user finished Slurm job: `date`"
