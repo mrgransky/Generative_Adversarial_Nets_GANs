@@ -6,35 +6,56 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-def calculate_fid(real_images, generated_images):
-	# Extract feature vectors
-	real_features = extract_features(real_images)
-	generated_features = extract_features(generated_images)
+import torch
+import torchvision.models as models
+from torch.nn.functional import adaptive_avg_pool2d
+from scipy.linalg import sqrtm
 
-	# Calculate mean and covariance of feature vectors
-	real_mean, real_cov = np.mean(real_features, axis=0), np.cov(real_features.T)
-	generated_mean, generated_cov = np.mean(generated_features, axis=0), np.cov(generated_features.T)
-
-	# Calculate the Frechet Inception Distance (Multivariate)
-	fid_distance = np.linalg.norm((real_mean - generated_mean).astype(np.float32), ord='fro') ** 2 + np.trace(real_cov * generated_cov)
-
-	return fid_distance
-
-def extract_features(images):
-	# Load Inception V3 model
-	model = torchvision.models.inception_v3(pretrained=True)
-	model.eval()
-
-	# Extract feature vectors
-	features = torch.FloatTensor()
-	for image in images:
-		image = image.unsqueeze(0)
+def calculate_fid(real_images, generated_images, inception_model, batch_size=64, device='cuda'):
+	def get_activations(images, model, batch_size=64, device='cuda'):
+		model.eval()
+		num_images = images.size(0)
+		activations = torch.zeros((num_images, 2048), dtype=torch.float32, device=device)
 		with torch.no_grad():
-			output = model(image)
-			feature = output.view(output.size(1), -1)
-			features = torch.cat((features, feature), 0)
+			for i in range(0, num_images, batch_size):
+				batch = images[i:i + batch_size].to(device)
+				pred = model(batch)[0]
+				activations[i:i + batch_size] = adaptive_avg_pool2d(pred, (1, 1)).squeeze(3).squeeze(2)
+		return activations
 
-	return features
+	real_activations = get_activations(real_images, inception_model, batch_size, device)
+	fake_activations = get_activations(generated_images, inception_model, batch_size, device)
+
+	# Calculate mean and covariance of activations
+	mu_real, sigma_real = real_activations.mean(dim=0), torch_cov(real_activations, rowvar=False)
+	mu_fake, sigma_fake = fake_activations.mean(dim=0), torch_cov(fake_activations, rowvar=False)
+
+	# Calculate FID
+	diff = mu_real - mu_fake
+	covmean, _ = sqrtm(sigma_real @ sigma_fake, disp=False)
+	if not np.isfinite(covmean).all():
+		cov_corr = torch.trace(sigma_real) + torch.trace(sigma_fake) - 2 * torch.trace(sqrtm(sigma_real @ sigma_fake))
+		covmean = covmean + torch.eye(covmean.shape[0], device=device) * cov_corr
+
+	fid = diff @ diff + torch.trace(sigma_real) + torch.trace(sigma_fake) - 2 * torch.trace(covmean)
+	return fid.item()
+
+def torch_cov(m, rowvar=False):
+	if m.dim() > 2:
+		raise ValueError('m has more than 2 dimensions')
+	if m.dim() < 2:
+		m = m.view(1, -1)
+	if not rowvar and m.size(0) != 1:
+		m = m.t()
+	fact = 1.0 / (m.size(1) - 1)
+	m -= torch.mean(m, dim=1, keepdim=True)
+	mt = m.t()
+	return fact * m @ mt
+
+# Example usage:
+inception_model = models.inception_v3(pretrained=True, aux_logits=False).to(device)
+fid_score = calculate_fid(real_images, generated_images, inception_model, batch_size=64, device=device)
+print(f"FID Score: {fid_score}")
 
 def plot_losses(disc_losses: List[float], gen_losses: List[float], saveDIR: str="path/to/savingDIR"):
 	# # Lists to store losses for plotting

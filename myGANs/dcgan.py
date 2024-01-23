@@ -152,14 +152,14 @@ for epoch in range(opt.nepochs):
 		# (1) Update Discriminator network 
 		##################################
 		
-		# train with real
+		# train with real images
 		netD.zero_grad()
 		batch_images = batch_images.to(device)
 		cur_batch_size = batch_images.size(0)
 		disc_real_pred = netD(batch_images)
 		disc_loss_real = criterion(disc_real_pred, torch.ones_like(disc_real_pred))
 		
-		# train with fake
+		# train with fake generated images
 		fake_noise = torch.randn(cur_batch_size, nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
 		fake = netG(fake_noise)
 		disc_fake_pred = netD(fake.detach())
@@ -167,7 +167,6 @@ for epoch in range(opt.nepochs):
 
 		disc_loss = 0.5 * (disc_loss_real + disc_loss_fake) # Discriminator loss of single batch
 
-		# Keep track of the average discriminator loss
 		mean_discriminator_loss += disc_loss.item() / display_step
 
 		disc_loss.backward(retain_graph=True)
@@ -184,10 +183,8 @@ for epoch in range(opt.nepochs):
 		gen_loss.backward()
 		optimizerG.step()
 		
-		# Keep track of the average generator loss
 		mean_generator_loss += gen_loss.item() / display_step
 
-		# Append losses to lists
 		disc_losses.append(disc_loss.item())
 		gen_losses.append(gen_loss.item())
 
