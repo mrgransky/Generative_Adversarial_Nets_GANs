@@ -7,8 +7,8 @@
 #SBATCH --mail-type=END,FAIL
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=128G
+#SBATCH --cpus-per-task=24
+#SBATCH --mem=199G
 #SBATCH --partition=gpu
 #SBATCH --time=03-00:00:00
 #SBATCH --gres=gpu:v100:1
@@ -36,8 +36,8 @@ resultsDIR="/scratch/project_2004072/GANs/misc_sngan" ########## must be adjuste
 python -u dcgan.py \
 					--rgbDIR $datasetDIR \
 					--resDIR $resultsDIR \
-					--nepochs 200 \
-					--batchSZ 16 \
+					--nepochs 100 \
+					--batchSZ 4 \
 					--numWorkers $SLURM_CPUS_PER_TASK
 					
 done_txt="$user finished Slurm job: `date`"
