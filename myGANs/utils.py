@@ -1,7 +1,40 @@
 from torchvision.utils import make_grid
-import matplotlib.pyplot as plt
+from torchvision.utils import save_image
+
 from typing import List, Set, Dict, Tuple
 import os
+import matplotlib.pyplot as plt
+import numpy as np
+
+def calculate_fid(real_images, generated_images):
+	# Extract feature vectors
+	real_features = extract_features(real_images)
+	generated_features = extract_features(generated_images)
+
+	# Calculate mean and covariance of feature vectors
+	real_mean, real_cov = np.mean(real_features, axis=0), np.cov(real_features.T)
+	generated_mean, generated_cov = np.mean(generated_features, axis=0), np.cov(generated_features.T)
+
+	# Calculate the Frechet Inception Distance (Multivariate)
+	fid_distance = np.linalg.norm((real_mean - generated_mean).astype(np.float32), ord='fro') ** 2 + np.trace(real_cov * generated_cov)
+
+	return fid_distance
+
+def extract_features(images):
+	# Load Inception V3 model
+	model = torchvision.models.inception_v3(pretrained=True)
+	model.eval()
+
+	# Extract feature vectors
+	features = torch.FloatTensor()
+	for image in images:
+		image = image.unsqueeze(0)
+		with torch.no_grad():
+			output = model(image)
+			feature = output.view(output.size(1), -1)
+			features = torch.cat((features, feature), 0)
+
+	return features
 
 def plot_losses(disc_losses: List[float], gen_losses: List[float], saveDIR: str="path/to/savingDIR"):
 	# # Lists to store losses for plotting

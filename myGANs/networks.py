@@ -167,7 +167,7 @@ class Discriminator(nn.Module):
 		]
 
 		if self.spectral_norm:
-				layers = [nn.utils.spectral_norm(layer) if isinstance(layer, nn.Conv2d) else layer for layer in layers]
+			layers = [nn.utils.spectral_norm(layer) if isinstance(layer, nn.Conv2d) else layer for layer in layers]
 
 		self.main = nn.Sequential(*layers)
 

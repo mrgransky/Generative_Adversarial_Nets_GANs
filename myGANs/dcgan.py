@@ -25,7 +25,7 @@ sys.dont_write_bytecode = True
 # python dcgan.py --rgbDIR $HOME/datasets/sentinel2-l1c_RGB_IMGs --resDIR $HOME/trash_logs/GANs/misc --batchSZ 64
 
 # in Local laptop:
-# python dcgan.py --rgbDIR /home/farid/datasets/sentinel2-l1c_RGB_IMGs --resDIR /home/farid/datasets/GANs_results/misc --spectral_norm True
+# python dcgan.py --rgbDIR /home/farid/datasets/sentinel2-l1c_RGB_IMGs --resDIR /home/farid/datasets/GANs_results/misc
 
 # DCGAN ref link: https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html#introduction
 
@@ -77,6 +77,7 @@ if opt.spectralNormDisc:
 	opt.resDIR += f"_spectralNormDisc_{opt.spectralNormDisc}"
 
 checkponts_dir = os.path.join(opt.resDIR, "checkpoints")
+metrics_dir = os.path.join(opt.resDIR, "metrics")
 
 print(opt.resDIR)
 
@@ -127,6 +128,9 @@ netD = Discriminator(
 ).to(device)
 netD.apply(weights_init)
 print(netD)
+
+print(f"Generator Parameters: {sum(p.numel() for p in netG.parameters() if p.requires_grad)}")
+print(f"Discriminator Parameters: {sum(p.numel() for p in netD.parameters() if p.requires_grad)}")
 
 # loss fcn: since we have sigmoid at the final layer of Discriminator
 criterion = torch.nn.BCELoss()
