@@ -4,10 +4,12 @@ import sys
 import random
 
 import torch
-import torch.backends.cudnn as cudnn
+import torchvision
+
 import torch.utils.data
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
+import torch.backends.cudnn as cudnn
 
 from dataloader import *
 from utils import *
@@ -39,7 +41,7 @@ parser.add_argument('--nz', type=int, default=100, help='noise latent z vector s
 parser.add_argument('--feature_g', type=int, default=256)
 parser.add_argument('--feature_d', type=int, default=256)
 
-parser.add_argument('--nepochs', type=int, default=2, help='number of epochs to train for')
+parser.add_argument('--nepochs', type=int, default=1, help='number of epochs to train for')
 parser.add_argument('--lr', type=float, default=2e-4, help='learning rate')
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
 
@@ -56,7 +58,7 @@ device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cp
 cudnn.benchmark: bool = True
 nz = int(opt.nz) # dimension of the noise vector
 nCh = int(opt.imgNumCh)
-display_step: int = 100
+display_step: int = 250
 
 opt.resDIR += f"_epoch_{opt.nepochs}"
 opt.resDIR += f"_batch_SZ_{opt.batchSZ}"
@@ -78,11 +80,18 @@ if opt.spectralNormDisc:
 
 checkponts_dir = os.path.join(opt.resDIR, "checkpoints")
 metrics_dir = os.path.join(opt.resDIR, "metrics")
-
-print(opt.resDIR)
+models_dir = os.path.join(opt.resDIR, "models")
+fake_imgs_dir = os.path.join(opt.resDIR, "fake_IMGs")
+real_imgs_dir = os.path.join(opt.resDIR, "real_IMGs")
 
 os.makedirs(opt.resDIR, exist_ok=True)
 os.makedirs(checkponts_dir, exist_ok=True)
+os.makedirs(metrics_dir, exist_ok=True)
+os.makedirs(fake_imgs_dir, exist_ok=True)
+os.makedirs(real_imgs_dir, exist_ok=True)
+
+# Specify the custom directory for PyTorch cache
+os.environ['TORCH_HOME'] = models_dir
 
 if os.path.expanduser('~') == "/users/alijanif":
 	dataset_dir = "/scratch/project_2004072" # scratch folder in my puhti account!
@@ -106,7 +115,7 @@ dataloader = torch.utils.data.DataLoader(
 	shuffle=True, 
 	num_workers=opt.numWorkers,
 )
-print(len(dataloader), type(dataloader), dataloader)
+print(len(dataloader), dataloader)
 
 print(f"Generator [spectral_norm: {opt.spectralNormGen}]".center(120, "-"))
 netG = Generator(
@@ -129,8 +138,15 @@ netD = Discriminator(
 netD.apply(weights_init)
 print(netD)
 
-print(f"Generator Parameters: {sum(p.numel() for p in netG.parameters() if p.requires_grad)}")
-print(f"Discriminator Parameters: {sum(p.numel() for p in netD.parameters() if p.requires_grad)}")
+print(
+	f">> nParams:\t"
+	f"Gen: {sum(p.numel() for p in netG.parameters() if p.requires_grad)} | "
+	f"Disc: {sum(p.numel() for p in netD.parameters() if p.requires_grad)}"
+)
+
+print(f"inception_v3 [weights: DEFAULT]".center(120, "-"))
+inception_model = torchvision.models.inception_v3(weights="DEFAULT", progress=False).to(device)
+print(inception_model)
 
 # loss fcn: since we have sigmoid at the final layer of Discriminator
 criterion = torch.nn.BCELoss()
@@ -147,59 +163,70 @@ gen_losses = list()
 print(f"Training with {torch.cuda.device_count()} GPU(s) & {opt.numWorkers} CPU core(s)".center(100, " "))
 for epoch in range(opt.nepochs):
 	for batch_idx, batch_images in enumerate(dataloader):
-		# print(epoch, batch_idx, type(batch_images), batch_images.shape)
+		# print(epoch+1, batch_idx, type(batch_images), batch_images.shape)
 		##################################
 		# (1) Update Discriminator network 
 		##################################
 		
-		# train with real images
-		netD.zero_grad()
-		batch_images = batch_images.to(device)
-		cur_batch_size = batch_images.size(0)
-		disc_real_pred = netD(batch_images)
-		disc_loss_real = criterion(disc_real_pred, torch.ones_like(disc_real_pred))
+		# # train with real images
+		# netD.zero_grad()
+		# batch_images = batch_images.to(device)
+		# cur_batch_size = batch_images.size(0)
+		# disc_real_pred = netD(batch_images)
+		# disc_loss_real = criterion(disc_real_pred, torch.ones_like(disc_real_pred))
 		
-		# train with fake generated images
-		fake_noise = torch.randn(cur_batch_size, nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
-		fake = netG(fake_noise)
-		disc_fake_pred = netD(fake.detach())
-		disc_loss_fake = criterion(disc_fake_pred, torch.zeros_like(disc_fake_pred))
+		# # train with fake generated images
+		# fake_noise = torch.randn(cur_batch_size, nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
+		# fake = netG(fake_noise)
+		# disc_fake_pred = netD(fake.detach())
+		# disc_loss_fake = criterion(disc_fake_pred, torch.zeros_like(disc_fake_pred))
 
-		disc_loss = 0.5 * (disc_loss_real + disc_loss_fake) # Discriminator loss of single batch
+		# disc_loss = 0.5 * (disc_loss_real + disc_loss_fake) # Discriminator loss of single batch
 
-		mean_discriminator_loss += disc_loss.item() / display_step
+		# mean_discriminator_loss += disc_loss.item() / display_step
 
-		disc_loss.backward(retain_graph=True)
-		optimizerD.step()
+		# disc_loss.backward(retain_graph=True)
+		# optimizerD.step()
 		
-		##############################
-		# (2) Update Generator network
-		##############################
-		netG.zero_grad()
-		fake_noise_2 = torch.randn(cur_batch_size, nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
-		fake_2 = netG(fake_noise_2)
-		disc_fake_pred = netD(fake_2)
-		gen_loss = criterion(disc_fake_pred, torch.ones_like(disc_fake_pred))
-		gen_loss.backward()
-		optimizerG.step()
+		# ##############################
+		# # (2) Update Generator network
+		# ##############################
+		# netG.zero_grad()
+		# fake_noise_2 = torch.randn(cur_batch_size, nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
+		# fake_2 = netG(fake_noise_2)
+		# disc_fake_pred = netD(fake_2)
+		# gen_loss = criterion(disc_fake_pred, torch.ones_like(disc_fake_pred))
+		# gen_loss.backward()
+		# optimizerG.step()
 		
-		mean_generator_loss += gen_loss.item() / display_step
+		# mean_generator_loss += gen_loss.item() / display_step
 
-		disc_losses.append(disc_loss.item())
-		gen_losses.append(gen_loss.item())
+		# disc_losses.append(disc_loss.item())
+		# gen_losses.append(gen_loss.item())
 
-		if batch_idx % display_step == 0 and batch_idx > 0:
+		if ((batch_idx+1) % display_step == 0) or (batch_idx+1 == len(dataloader)):
 			print(
-				f"Epoch {epoch+1}/{opt.nepochs} Batch {batch_idx}/{len(dataloader)} "
-				f"D_loss[batch]: {disc_loss.item():.6f} G_loss[batch]: {gen_loss.item():.6f} "
-				f"D_loss[avg]: {mean_discriminator_loss:.6f} G_loss[avg]: {mean_generator_loss:.6f}"
+				f"Epoch {epoch+1}/{opt.nepochs} Batch {batch_idx+1}/{len(dataloader)} "
+				# f"D_loss[batch]: {disc_loss.item():.6f} G_loss[batch]: {gen_loss.item():.6f} "
+				# f"D_loss[avg]: {mean_discriminator_loss:.6f} G_loss[avg]: {mean_generator_loss:.6f}"
 			)
-			vutils.save_image(batch_images, os.path.join(opt.resDIR, f"real_samples_ep_{epoch+1}_batchIDX_{batch_idx}.png") , normalize=True)
-			vutils.save_image(fake.detach(), os.path.join(opt.resDIR, f"fake_samples_ep_{epoch+1}_batchIDX_{batch_idx}.png"), normalize=True)
-			mean_generator_loss = 0
-			mean_discriminator_loss = 0
-	
-	torch.save(netG.state_dict(), os.path.join(checkponts_dir, f"generator_ep_{epoch}.pth"))
-	torch.save(netD.state_dict(), os.path.join(checkponts_dir, f"discriminator_ep_{epoch}.pth"))
+			# vutils.save_image(batch_images, os.path.join(real_imgs_dir, f"real_samples_ep_{epoch+1}_batchIDX_{batch_idx+1}.png") , normalize=True)
+			# vutils.save_image(fake.detach(), os.path.join(fake_imgs_dir, f"fake_samples_ep_{epoch+1}_batchIDX_{batch_idx+1}.png"), normalize=True)
 
-plot_losses(disc_losses=disc_losses, gen_losses=gen_losses, saveDIR=opt.resDIR)
+			# mean_generator_loss = 0
+			# mean_discriminator_loss = 0
+	
+# 	torch.save(netG.state_dict(), os.path.join(checkponts_dir, f"generator_ep_{epoch}.pth"))
+# 	torch.save(netD.state_dict(), os.path.join(checkponts_dir, f"discriminator_ep_{epoch}.pth"))
+
+# save_pickle(
+# 	pkl=disc_losses, 
+# 	fname=os.path.join(models_dir, f"{len(disc_losses)}_disc_losses.gz"),
+# )
+
+# save_pickle(
+# 	pkl=gen_losses, 
+# 	fname=os.path.join(models_dir, f"{len(gen_losses)}_gen_losses.gz"),
+# )
+
+plot_losses(disc_losses=disc_losses, gen_losses=gen_losses, saveDIR=metrics_dir)
