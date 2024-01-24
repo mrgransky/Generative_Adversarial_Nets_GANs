@@ -168,65 +168,65 @@ for epoch in range(opt.nepochs):
 		# (1) Update Discriminator network 
 		##################################
 		
-		# # train with real images
-		# netD.zero_grad()
-		# batch_images = batch_images.to(device)
-		# cur_batch_size = batch_images.size(0)
-		# disc_real_pred = netD(batch_images)
-		# disc_loss_real = criterion(disc_real_pred, torch.ones_like(disc_real_pred))
+		# train with real images
+		netD.zero_grad()
+		batch_images = batch_images.to(device)
+		cur_batch_size = batch_images.size(0)
+		disc_real_pred = netD(batch_images)
+		disc_loss_real = criterion(disc_real_pred, torch.ones_like(disc_real_pred))
 		
-		# # train with fake generated images
-		# fake_noise = torch.randn(cur_batch_size, nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
-		# fake = netG(fake_noise)
-		# disc_fake_pred = netD(fake.detach())
-		# disc_loss_fake = criterion(disc_fake_pred, torch.zeros_like(disc_fake_pred))
+		# train with fake generated images
+		fake_noise = torch.randn(cur_batch_size, nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
+		fake = netG(fake_noise)
+		disc_fake_pred = netD(fake.detach())
+		disc_loss_fake = criterion(disc_fake_pred, torch.zeros_like(disc_fake_pred))
 
-		# disc_loss = 0.5 * (disc_loss_real + disc_loss_fake) # Discriminator loss of single batch
+		disc_loss = 0.5 * (disc_loss_real + disc_loss_fake) # Discriminator loss of single batch
 
-		# mean_discriminator_loss += disc_loss.item() / display_step
+		mean_discriminator_loss += disc_loss.item() / display_step
 
-		# disc_loss.backward(retain_graph=True)
-		# optimizerD.step()
+		disc_loss.backward(retain_graph=True)
+		optimizerD.step()
 		
-		# ##############################
-		# # (2) Update Generator network
-		# ##############################
-		# netG.zero_grad()
-		# fake_noise_2 = torch.randn(cur_batch_size, nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
-		# fake_2 = netG(fake_noise_2)
-		# disc_fake_pred = netD(fake_2)
-		# gen_loss = criterion(disc_fake_pred, torch.ones_like(disc_fake_pred))
-		# gen_loss.backward()
-		# optimizerG.step()
+		##############################
+		# (2) Update Generator network
+		##############################
+		netG.zero_grad()
+		fake_noise_2 = torch.randn(cur_batch_size, nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
+		fake_2 = netG(fake_noise_2)
+		disc_fake_pred = netD(fake_2)
+		gen_loss = criterion(disc_fake_pred, torch.ones_like(disc_fake_pred))
+		gen_loss.backward()
+		optimizerG.step()
 		
-		# mean_generator_loss += gen_loss.item() / display_step
+		mean_generator_loss += gen_loss.item() / display_step
 
-		# disc_losses.append(disc_loss.item())
-		# gen_losses.append(gen_loss.item())
+		disc_losses.append(disc_loss.item())
+		gen_losses.append(gen_loss.item())
 
 		if ((batch_idx+1) % display_step == 0) or (batch_idx+1 == len(dataloader)):
 			print(
 				f"Epoch {epoch+1}/{opt.nepochs} Batch {batch_idx+1}/{len(dataloader)} "
-				# f"D_loss[batch]: {disc_loss.item():.6f} G_loss[batch]: {gen_loss.item():.6f} "
-				# f"D_loss[avg]: {mean_discriminator_loss:.6f} G_loss[avg]: {mean_generator_loss:.6f}"
+				f"D_loss[batch]: {disc_loss.item():.6f} G_loss[batch]: {gen_loss.item():.6f} "
+				f"D_loss[avg]: {mean_discriminator_loss:.6f} G_loss[avg]: {mean_generator_loss:.6f}"
 			)
-			# vutils.save_image(batch_images, os.path.join(real_imgs_dir, f"real_samples_ep_{epoch+1}_batchIDX_{batch_idx+1}.png") , normalize=True)
-			# vutils.save_image(fake.detach(), os.path.join(fake_imgs_dir, f"fake_samples_ep_{epoch+1}_batchIDX_{batch_idx+1}.png"), normalize=True)
+			vutils.save_image(batch_images, os.path.join(real_imgs_dir, f"real_samples_ep_{epoch+1}_batchIDX_{batch_idx+1}.png") , normalize=True)
+			vutils.save_image(fake.detach(), os.path.join(fake_imgs_dir, f"fake_samples_ep_{epoch+1}_batchIDX_{batch_idx+1}.png"), normalize=True)
 
-			# mean_generator_loss = 0
-			# mean_discriminator_loss = 0
+			mean_generator_loss = 0
+			mean_discriminator_loss = 0
 	
-# 	torch.save(netG.state_dict(), os.path.join(checkponts_dir, f"generator_ep_{epoch}.pth"))
-# 	torch.save(netD.state_dict(), os.path.join(checkponts_dir, f"discriminator_ep_{epoch}.pth"))
+	torch.save(netG.state_dict(), os.path.join(checkponts_dir, f"generator_ep_{epoch}.pth"))
+	torch.save(netD.state_dict(), os.path.join(checkponts_dir, f"discriminator_ep_{epoch}.pth"))
 
-# save_pickle(
-# 	pkl=disc_losses, 
-# 	fname=os.path.join(models_dir, f"{len(disc_losses)}_disc_losses.gz"),
-# )
+save_pickle(
+	pkl=disc_losses, 
+	fname=os.path.join(models_dir, f"{len(disc_losses)}_disc_losses.gz"),
+)
 
-# save_pickle(
-# 	pkl=gen_losses, 
-# 	fname=os.path.join(models_dir, f"{len(gen_losses)}_gen_losses.gz"),
-# )
+save_pickle(
+	pkl=gen_losses, 
+	fname=os.path.join(models_dir, f"{len(gen_losses)}_gen_losses.gz"),
+)
 
 plot_losses(disc_losses=disc_losses, gen_losses=gen_losses, saveDIR=metrics_dir)
