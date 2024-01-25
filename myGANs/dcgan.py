@@ -52,7 +52,6 @@ parser.add_argument('--resDIR', required=True, help='folder to output images and
 parser.add_argument('--rgbDIR', required=True, help='path to RGB dataset')
 
 opt = parser.parse_args()
-print(opt)
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 cudnn.benchmark: bool = True
@@ -75,6 +74,8 @@ if opt.spectralNormGen:
 
 if opt.spectralNormDisc:
 	opt.resDIR += f"_spectralNormDisc_{opt.spectralNormDisc}"
+
+print(opt)
 
 checkponts_dir = os.path.join(opt.resDIR, "checkpoints")
 metrics_dir = os.path.join(opt.resDIR, "metrics")

@@ -9,8 +9,8 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=16G
-#SBATCH --partition=gpu
-#SBATCH --time=03-00:00:00
+#SBATCH --partition=gputest
+#SBATCH --time=00-00:15:00
 #SBATCH --gres=gpu:v100:1
 
 user="`whoami`"
@@ -38,6 +38,7 @@ python -u dcgan.py \
 					--resDIR $resultsDIR \
 					--nepochs 40 \
 					--batchSZ 4 \
+					--spectralNormDisc=true \
 					--numWorkers $SLURM_CPUS_PER_TASK
 					
 done_txt="$user finished Slurm job: `date`"
