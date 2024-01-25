@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --account=project_2004072
-#SBATCH --job-name=dcgan
+#SBATCH --job-name=test_sngan
 #SBATCH --output=/scratch/project_2004072/GANs/trash/GANs_logs/%x_%N_%j.out
 #SBATCH --mail-user=farid.alijani@gmail.com
 #SBATCH --mail-type=END,FAIL
@@ -31,7 +31,7 @@ echo "${stars// /*}"
 echo "<> Using $SLURM_CLUSTER_NAME conda env from tykky module..."
 
 datasetDIR="/scratch/project_2004072/sentinel2-l1c_RGB_IMGs"
-resultsDIR="/scratch/project_2004072/GANs/misc_dcgan" ########## must be adjusted! ##########
+resultsDIR="/scratch/project_2004072/GANs/misc_test_" ########## must be adjusted! ##########
 
 python -u dcgan.py \
 					--rgbDIR $datasetDIR \
