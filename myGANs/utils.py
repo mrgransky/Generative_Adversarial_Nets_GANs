@@ -1,20 +1,24 @@
-from torchvision.utils import make_grid
-from torchvision.utils import save_image
-
-from typing import List, Set, Dict, Tuple
 import os
 import time
-import matplotlib.pyplot as plt
-import numpy as np
-
-import torch
-import torchvision.models as models
-from torch.nn.functional import adaptive_avg_pool2d
-from scipy.linalg import sqrtm
-import pandas as pd
-import numpy as np
 import dill 
 import gzip
+import torch
+
+from torchvision.utils import make_grid
+from torchvision.utils import save_image
+from torchvision.io import read_image
+from typing import List, Set, Dict, Tuple
+import torchvision.transforms.functional as F
+import torchvision.models as models
+from torch.nn.functional import adaptive_avg_pool2d
+
+from scipy.linalg import sqrtm
+
+import pandas as pd
+import numpy as np
+
+import matplotlib.pyplot as plt
+plt.rcParams["savefig.bbox"] = 'tight'
 
 def calculate_fid(real_images, generated_images, inception_model, batch_size=64, device='cuda'):
 	def get_activations(images, model, batch_size=64, device='cuda'):
@@ -73,26 +77,26 @@ def save_pickle(pkl, fname:str=""):
 			dill.dump(pkl, f)
 	elpt = time.time()-st_t
 	fsize_dump = os.stat( fname ).st_size / 1e6
-	print(f"Elapsed_t: {elpt:.3f} s | {fsize_dump:.2f} MB".center(150, " "))
+	print(f"Elapsed_t: {elpt:.3f} s | {fsize_dump:.4f} MB".center(100, " "))
 
-def plot_losses(disc_losses: List[float], gen_losses: List[float], saveDIR: str="path/to/savingDIR"):
-	print(f">> Saving {len(disc_losses)} D_losses & {len(gen_losses)} G_losses...")
+def plot_losses(disc_losses: List[float], gen_losses: List[float], loss_fname: str="path/to/savingDIR/loss.png"):
+	print(f'>> Saving {loss_fname.split("/")[-1].replace(".png", "")}: Disc: {len(disc_losses)} | Gen: {len(gen_losses)} ...')
 	
-	plt.figure(figsize=(10, 6), facecolor='white')
-	plt.plot(disc_losses, label='Discriminator', alpha=0.8)
-	plt.plot(gen_losses, label='Generator', alpha=0.8)
+	plt.figure(figsize=(10, 4), facecolor='white')
+	plt.plot(disc_losses, label='Disc', alpha=0.85, color="blue")
+	plt.plot(gen_losses, label='Gen', alpha=0.4, color="red")
 	plt.xlabel('Iteration')
-	plt.ylabel('Loss')
-	plt.title('Generator and Discriminator Losses over Training')
-	plt.legend()
+	plt.ylabel(f'{loss_fname.split("/")[-1].replace(".png", "")}')
+	plt.title(f'Generator & Discriminator {loss_fname.split("/")[-1].replace(".png", "")}')
+	plt.legend(ncol=2, frameon=False)
 	
 	plt.savefig(
-		fname=os.path.join(saveDIR, "loss.png"),
+		fname=loss_fname,
 		bbox_inches ="tight",
-		facecolor="white", 
+		facecolor="white",
 		edgecolor='none',
 		transparent = True,
-		dpi=200,
+		dpi=150,
 	)
 
 def show_tensor_images(image_tensor, num_images=25, size=(1, 28, 28)):
@@ -100,4 +104,15 @@ def show_tensor_images(image_tensor, num_images=25, size=(1, 28, 28)):
 	image_unflat = image_tensor.detach().cpu()
 	image_grid = make_grid(image_unflat[:num_images], nrow=5)
 	plt.imshow(image_grid.permute(1, 2, 0).squeeze())
+	plt.show()
+
+def visualize(dataloader):
+	sample_batch_images, sample_batch_image_names = next(iter(dataloader))
+	# print(sample_batch_images.size(), sample_batch_image_names, len(sample_batch_images))
+	batch_img_list = [np.transpose(sample_batch_images[bi], (1,2,0)) for bi in range( len( sample_batch_images ) ) ]
+	fig, axs = plt.subplots(ncols=len(batch_img_list), squeeze=False, figsize=(8,3))
+	for i, img in enumerate(batch_img_list):
+		axs[0, i].imshow(np.asarray(img))
+		axs[0, i].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
+		axs[0, i].set_title(f"{sample_batch_image_names[i]}")
 	plt.show()

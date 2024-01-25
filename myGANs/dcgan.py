@@ -46,7 +46,7 @@ parser.add_argument('--lr', type=float, default=2e-4, help='learning rate')
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
 
 parser.add_argument('--spectralNormGen', type=bool, default=False, help='Spectrally Normalized Generator')
-parser.add_argument('--spectralNormDisc', type=bool, default=True, help='Spectrally Normalized Discriminator')
+parser.add_argument('--spectralNormDisc', type=bool, default=False, help='Spectrally Normalized Discriminator')
 
 parser.add_argument('--resDIR', required=True, help='folder to output images and model checkpoints')
 parser.add_argument('--rgbDIR', required=True, help='path to RGB dataset')
@@ -56,9 +56,7 @@ print(opt)
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 cudnn.benchmark: bool = True
-nz = int(opt.nz) # dimension of the noise vector
-nCh = int(opt.imgNumCh)
-display_step: int = 250
+display_step: int = 500
 
 opt.resDIR += f"_epoch_{opt.nepochs}"
 opt.resDIR += f"_batch_SZ_{opt.batchSZ}"
@@ -111,11 +109,12 @@ print(f'>> Generating a dataloader for {len(natsorted( glob.glob( opt.rgbDIR + "
 dataset = Sentinel2Dataset(img_dir=opt.rgbDIR, img_sz=opt.imgSZ)
 dataloader = torch.utils.data.DataLoader(
 	dataset=dataset, 
-	batch_size=opt.batchSZ, 
+	batch_size=opt.batchSZ,
 	shuffle=True, 
 	num_workers=opt.numWorkers,
 )
-print(len(dataloader), dataloader)
+print(f"dataset contans: {len(dataset)} images | dataloader with batch_size: {opt.batchSZ}: {len(dataloader)}")
+#visualize(dataloader=dataloader)
 
 print(f"Generator [spectral_norm: {opt.spectralNormGen}]".center(120, "-"))
 netG = Generator(
@@ -157,17 +156,21 @@ optimizerG = torch.optim.Adam(netG.parameters(), lr=opt.lr, betas=(opt.beta1, 0.
 
 mean_generator_loss = 0
 mean_discriminator_loss = 0
+
 disc_losses = list()
 gen_losses = list()
 
+mean_gen_losses = list()
+mean_disc_losses = list()
+
 print(f"Training with {torch.cuda.device_count()} GPU(s) & {opt.numWorkers} CPU core(s)".center(100, " "))
 for epoch in range(opt.nepochs):
-	for batch_idx, batch_images in enumerate(dataloader):
-		# print(epoch+1, batch_idx, type(batch_images), batch_images.shape)
+	for batch_idx, (batch_images, batch_images_names) in enumerate(dataloader):
+		# print(epoch+1, batch_idx, type(batch_images), batch_images.shape, batch_images_names)
 		##################################
 		# (1) Update Discriminator network 
 		##################################
-		
+
 		# train with real images
 		netD.zero_grad()
 		batch_images = batch_images.to(device)
@@ -176,7 +179,7 @@ for epoch in range(opt.nepochs):
 		disc_loss_real = criterion(disc_real_pred, torch.ones_like(disc_real_pred))
 		
 		# train with fake generated images
-		fake_noise = torch.randn(cur_batch_size, nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
+		fake_noise = torch.randn(cur_batch_size, opt.nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
 		fake = netG(fake_noise)
 		disc_fake_pred = netD(fake.detach())
 		disc_loss_fake = criterion(disc_fake_pred, torch.zeros_like(disc_fake_pred))
@@ -192,7 +195,7 @@ for epoch in range(opt.nepochs):
 		# (2) Update Generator network
 		##############################
 		netG.zero_grad()
-		fake_noise_2 = torch.randn(cur_batch_size, nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
+		fake_noise_2 = torch.randn(cur_batch_size, opt.nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
 		fake_2 = netG(fake_noise_2)
 		disc_fake_pred = netD(fake_2)
 		gen_loss = criterion(disc_fake_pred, torch.ones_like(disc_fake_pred))
@@ -204,15 +207,26 @@ for epoch in range(opt.nepochs):
 		disc_losses.append(disc_loss.item())
 		gen_losses.append(gen_loss.item())
 
+		mean_gen_losses.append(mean_generator_loss)
+		mean_disc_losses.append(mean_discriminator_loss)
+
 		if ((batch_idx+1) % display_step == 0) or (batch_idx+1 == len(dataloader)):
 			print(
 				f"Epoch {epoch+1}/{opt.nepochs} Batch {batch_idx+1}/{len(dataloader)} "
 				f"D_loss[batch]: {disc_loss.item():.6f} G_loss[batch]: {gen_loss.item():.6f} "
 				f"D_loss[avg]: {mean_discriminator_loss:.6f} G_loss[avg]: {mean_generator_loss:.6f}"
 			)
-			vutils.save_image(batch_images, os.path.join(real_imgs_dir, f"real_samples_ep_{epoch+1}_batchIDX_{batch_idx+1}.png") , normalize=True)
-			vutils.save_image(fake.detach(), os.path.join(fake_imgs_dir, f"fake_samples_ep_{epoch+1}_batchIDX_{batch_idx+1}.png"), normalize=True)
-
+			real_batch_img_names = f"{'_'.join(batch_images_names[:-1])}_{batch_images_names[-1].split('.')[0]}"
+			vutils.save_image(
+				tensor=batch_images, 
+				fp=os.path.join(real_imgs_dir, f"epoch{epoch+1}_batchIDX_{batch_idx+1}_Real_IMGs_{real_batch_img_names.replace('.png', '')}.png"), 
+				normalize=True,
+			)
+			vutils.save_image(
+				tensor=fake.detach(), 
+				fp=os.path.join(fake_imgs_dir, f"fake_samples_ep_{epoch+1}_batchIDX_{batch_idx+1}.png"), 
+				normalize=True,
+			)
 			mean_generator_loss = 0
 			mean_discriminator_loss = 0
 	
@@ -229,4 +243,14 @@ save_pickle(
 	fname=os.path.join(models_dir, f"{len(gen_losses)}_gen_losses.gz"),
 )
 
-plot_losses(disc_losses=disc_losses, gen_losses=gen_losses, saveDIR=metrics_dir)
+plot_losses(
+	disc_losses=disc_losses, 
+	gen_losses=gen_losses, 
+	loss_fname=os.path.join(metrics_dir, f"loss.png"),
+)
+
+plot_losses(
+	disc_losses=mean_disc_losses, 
+	gen_losses=mean_gen_losses, 
+	loss_fname=os.path.join(metrics_dir, f"mean_loss.png"),
+)

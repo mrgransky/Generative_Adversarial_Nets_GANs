@@ -38,7 +38,8 @@ class Sentinel2Dataset(Dataset):
 		image_path = os.path.join(self.img_dir, f'{idx:06d}.png')
 		image = Image.open(image_path).convert('RGB')
 		image = self.transform(image)
-		return image
+		image_name = f'{idx:06d}.png'
+		return image, image_name
 
 def get_rgb_images(nc_files_path: str="path/to/nc_files", rgb_dir: str="path/to/rgb_images"):
 	NC_FILES = natsorted( glob.glob( nc_files_path + "/" + "*.nc" ) ) # 10K nc files (sorted by name)
