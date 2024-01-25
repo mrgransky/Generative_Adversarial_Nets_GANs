@@ -1,16 +1,16 @@
 #!/bin/bash
 
 #SBATCH --account=project_2004072
-#SBATCH --job-name=test_dcgan
+#SBATCH --job-name=sngan
 #SBATCH --output=/scratch/project_2004072/GANs/trash/GANs_logs/%x_%N_%j.out
 #SBATCH --mail-user=farid.alijani@gmail.com
 #SBATCH --mail-type=END,FAIL
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=2
-#SBATCH --mem=16G
-#SBATCH --partition=gputest
-#SBATCH --time=00-00:15:00
+#SBATCH --cpus-per-task=24
+#SBATCH --mem=64G
+#SBATCH --partition=gpu
+#SBATCH --time=03-00:00:00
 #SBATCH --gres=gpu:v100:1
 
 user="`whoami`"
@@ -31,15 +31,15 @@ echo "${stars// /*}"
 echo "<> Using $SLURM_CLUSTER_NAME conda env from tykky module..."
 
 datasetDIR="/scratch/project_2004072/sentinel2-l1c_RGB_IMGs"
-resultsDIR="/scratch/project_2004072/GANs/misc_test_dcgan" ########## must be adjusted! ##########
+resultsDIR="/scratch/project_2004072/GANs/misc_sngan" ########## must be adjusted! ##########
 
 python -u dcgan.py \
 					--rgbDIR $datasetDIR \
 					--resDIR $resultsDIR \
-					--batchSZ 4 \
 					--numWorkers $SLURM_CPUS_PER_TASK \
-					# --nepochs 40 --spectralNormDisc=true
-					
+					--nepochs 40 \
+					--batchSZ 4 --spectralNormDisc=true
+
 
 done_txt="$user finished Slurm job: `date`"
 echo -e "${done_txt//?/$ch}\n${done_txt}\n${done_txt//?/$ch}"

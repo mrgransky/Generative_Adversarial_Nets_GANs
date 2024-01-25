@@ -92,7 +92,7 @@ os.makedirs(real_imgs_dir, exist_ok=True)
 # Specify the custom directory for PyTorch cache
 os.environ['TORCH_HOME'] = models_dir
 
-sys.exit(0)
+# sys.exit(0)
 
 if os.path.expanduser('~') == "/users/alijanif":
 	dataset_dir = "/scratch/project_2004072" # scratch folder in my puhti account!
