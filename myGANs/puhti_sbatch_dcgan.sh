@@ -36,9 +36,9 @@ resultsDIR="/scratch/project_2004072/GANs/misc_test_sngan" ########## must be ad
 python -u dcgan.py \
 					--rgbDIR $datasetDIR \
 					--resDIR $resultsDIR \
-					--nepochs 40 --spectralNormDisc=true \
 					--batchSZ 4 \
-					--numWorkers $SLURM_CPUS_PER_TASK
+					--numWorkers $SLURM_CPUS_PER_TASK \
+					--nepochs 40 --spectralNormDisc=true
 					
 done_txt="$user finished Slurm job: `date`"
 echo -e "${done_txt//?/$ch}\n${done_txt}\n${done_txt//?/$ch}"
