@@ -64,7 +64,6 @@ def torch_cov(m, rowvar=False):
 # # Example usage:
 # inception_model = models.inception_v3(pretrained=True, aux_logits=False).to(device)
 # fid_score = calculate_fid(real_images, generated_images, inception_model, batch_size=64, device=device)
-# print(f"FID Score: {fid_score}")
 
 def save_pickle(pkl, fname:str=""):
 	print(f"Saving {type(pkl)} {fname}")
