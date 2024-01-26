@@ -138,13 +138,30 @@ def get_gen_disc_models(device: str="cuda"):
 	get_param_(model=model_discriminator)
 	return model_generator, model_discriminator
 
-def test(gen, disc, device: str="cuda"):
+def test(dataloader, gen, disc, latent_noise_dim: int=100, device: str="cuda"):
 	print(f"Test with {device}, {torch.cuda.device_count()} GPU(s) & {opt.numWorkers} CPU core(s)".center(100, " "))
 	gen.eval()
 	disc.eval()
+
 	print(f"inception_v3 [weights: DEFAULT]".center(120, "-"))
 	inception_model = torchvision.models.inception_v3(weights="DEFAULT", progress=False).to(device)
 	get_param_(model=inception_model)
+
+	real_features_all, fake_features_all = get_real_fake_features(
+		dataloader=dataloader, 
+		model_generator=gen,
+		model_inception_v3=inception_model,
+		nz=latent_noise_dim,
+		device=device,
+	)
+	mu_fake = torch.mean(fake_features_all, axis=0)
+	mu_real = torch.mean(real_features_all, axis=0)
+	sigma_fake = get_covariance(features=fake_features_all)
+	sigma_real = get_covariance(features=real_features_all)
+	with torch.no_grad():
+		fid = frechet_distance(mu_real, mu_fake, sigma_real, sigma_fake).item()
+		print(f"FID: {fid:.3f}")
+
 
 def train(init_gen_model=None, init_disc_model=None):
 	print(f"Training with {torch.cuda.device_count()} GPU(s) & {opt.numWorkers} CPU core(s)".center(100, " "))
@@ -224,7 +241,7 @@ def train(init_gen_model=None, init_disc_model=None):
 			if ((batch_idx+1) % display_step == 0) or (batch_idx+1 == len(dataloader)):
 				print(
 					f"Epoch {epoch+1}/{opt.nepochs} Batch {batch_idx+1}/{len(dataloader)} "
-					f"D_loss[batch]: {disc_loss.item():.6f} G_loss[batch]: {gen_loss.item():.6f} "
+					f"D_loss[batch]: {disc_loss.item():.3f} G_loss[batch]: {gen_loss.item():.3f} "
 				)
 				real_batch_img_names = f"{'_'.join(batch_images_names[:-1])}_{batch_images_names[-1].split('.')[0]}"
 				vutils.save_image(
@@ -257,7 +274,7 @@ def train(init_gen_model=None, init_disc_model=None):
 			best_gen_model = netG
 			best_generator_state_dict = netG.state_dict()
 		
-		print(f"Epoch {epoch+1}/{opt.nepochs} Mean D_loss: {mean_discriminator_loss:.6f} Mean G_loss: {mean_generator_loss:.6f}")
+		print(f"\tEpoch {epoch+1}/{opt.nepochs} Mean D_loss: {mean_discriminator_loss:.3f} G_loss: {mean_generator_loss:.3f}")
 
 		mean_discriminator_losses.append(mean_discriminator_loss)
 		mean_generator_losses.append(mean_generator_loss)
@@ -302,7 +319,11 @@ def main():
 		print(f"<!> {e}")
 		model_gen, model_disc = train(init_gen_model, init_disc_model)
 
-	test(gen=model_gen, disc=model_disc)
+	test(
+		dataloader=dataloader,
+		gen=model_gen, 
+		disc=model_disc,
+	)
 
 if __name__ == '__main__':
 	#os.system("clear")

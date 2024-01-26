@@ -2,6 +2,8 @@ import os
 import time
 import dill 
 import gzip
+import scipy
+
 import torch
 import datetime
 from torchvision.utils import make_grid
@@ -20,11 +22,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams["savefig.bbox"] = 'tight'
 
-
 def get_param_(model):
-	print(f"model: {model.__class__.__name__ } "
-				f"conatins: {sum(p.numel() for p in model.parameters() if p.requires_grad)} parameters"
-			)
+	print(
+		f"model: {model.__class__.__name__ } "
+		f"conatins: {sum(p.numel() for p in model.parameters() if p.requires_grad)} parameters"
+	)
 	print(model)
 	# print()
 	# for name, param in model.named_parameters():
@@ -33,10 +35,40 @@ def get_param_(model):
 	# 		print(param.data)
 	# 		print('-'*100)
 
+def matrix_sqrt(x):
+	y = x.cpu().detach().numpy()
+	y = scipy.linalg.sqrtm(y)
+	return torch.Tensor(y.real, device=x.device)
 
+def frechet_distance(mu_x, mu_y, sigma_x, sigma_y):
+	return (mu_x - mu_y).dot(mu_x - mu_y) + torch.trace(sigma_x) + torch.trace(sigma_y) - 2*torch.trace(matrix_sqrt(sigma_x @ sigma_y))
 
+def get_covariance(features):
+	return torch.Tensor(np.cov(features.detach().numpy(), rowvar=False))
 
-
+def get_real_fake_features(dataloader, model_generator, model_inception_v3, nz: int = 100, device: str="cuda"):
+	real_features_list = []
+	fake_features_list = []
+	with torch.no_grad():
+		for batch_idx, (batch_imgs, _) in enumerate(dataloader):
+			#print(batch_idx, batch_imgs.shape, type(batch_imgs), batch_imgs.dtype)
+			print(batch_idx)
+			real_samples = batch_imgs
+			print(real_samples.shape, type(real_samples), real_samples.dtype)
+			real_features = model_inception_v3(real_samples.to(device)).detach().to('cpu')
+			print(type(real_features), real_features.dtype, real_features.shape)
+			real_features_list.append(real_features)
+			# Generator to genrate fake_samples and fake_features:
+			fake_noise = torch.randn(len(batch_imgs), nz, device=device) # nb x nz
+			fake_samples = model_generator(fake_noise) # torch.Size([nb, nch, feature_g, feature_g])
+			fake_samples = Fun.interpolate(fake_samples, size=(299, 299), mode='bilinear', align_corners=False)
+			print(fake_samples.shape, type(fake_samples), fake_samples.dtype)
+			fake_features = model_inception_v3(fake_samples.to(device)).detach().to('cpu')
+			print(type(fake_features), fake_features.dtype, fake_features.shape)
+			fake_features_list.append(fake_features)
+			print()
+	print(len(real_features_list), len(fake_features_list))
+	return torch.cat(tensors=real_features_list, dim=0), torch.cat(tensors=fake_features_list, dim=0)
 
 
 
