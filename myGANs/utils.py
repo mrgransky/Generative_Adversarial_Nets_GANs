@@ -3,7 +3,7 @@ import time
 import dill 
 import gzip
 import torch
-
+import datetime
 from torchvision.utils import make_grid
 from torchvision.utils import save_image
 from torchvision.io import read_image
@@ -19,6 +19,27 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 plt.rcParams["savefig.bbox"] = 'tight'
+
+
+def get_param_(model):
+	print(f"model: {model.__class__.__name__ } "
+				f"conatins: {sum(p.numel() for p in model.parameters() if p.requires_grad)} parameters"
+			)
+	print(model)
+	# print()
+	# for name, param in model.named_parameters():
+	# 	if param.requires_grad:
+	# 		print (name, param.data.shape)
+	# 		print(param.data)
+	# 		print('-'*100)
+
+
+
+
+
+
+
+
 
 def calculate_fid(real_images, generated_images, inception_model, batch_size=64, device='cuda'):
 	def get_activations(images, model, batch_size=64, device='cuda'):
