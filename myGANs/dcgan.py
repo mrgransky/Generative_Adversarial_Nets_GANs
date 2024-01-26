@@ -88,6 +88,7 @@ os.makedirs(checkponts_dir, exist_ok=True)
 os.makedirs(metrics_dir, exist_ok=True)
 os.makedirs(fake_imgs_dir, exist_ok=True)
 os.makedirs(real_imgs_dir, exist_ok=True)
+os.makedirs(models_dir, exist_ok=True)
 
 # Specify the custom directory for PyTorch cache
 os.environ['TORCH_HOME'] = models_dir
@@ -267,7 +268,7 @@ def train(init_gen_model=None, init_disc_model=None):
 		if mean_discriminator_loss < best_discriminator_loss:
 			print(
 				f">> Found better Discriminator model @ epoch: {epoch+1} "
-				f"prev_best_loss: {best_discriminator_loss} curr_loss: {mean_discriminator_loss}"
+				f"prev_best_loss: {best_discriminator_loss} curr_loss: {mean_discriminator_loss:.3f}"
 			)
 			best_discriminator_loss = mean_discriminator_loss
 			best_disc_model = netD
@@ -276,7 +277,7 @@ def train(init_gen_model=None, init_disc_model=None):
 		if mean_generator_loss < best_generator_loss:
 			print(
 				f">> Found better Generator model @ epoch: {epoch+1} "
-				f"prev_best_loss: {best_generator_loss} curr_loss: {mean_generator_loss}"
+				f"prev_best_loss: {best_generator_loss} curr_loss: {mean_generator_loss:.3f}"
 			)
 			best_generator_loss = mean_generator_loss
 			best_gen_model = netG
