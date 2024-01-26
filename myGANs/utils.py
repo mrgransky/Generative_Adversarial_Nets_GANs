@@ -10,11 +10,8 @@ from torchvision.utils import make_grid
 from torchvision.utils import save_image
 from torchvision.io import read_image
 from typing import List, Set, Dict, Tuple
-import torchvision.transforms.functional as F
+import torch.nn.functional as Fun
 import torchvision.models as models
-from torch.nn.functional import adaptive_avg_pool2d
-
-from scipy.linalg import sqrtm
 
 import pandas as pd
 import numpy as np
@@ -53,7 +50,7 @@ def get_real_fake_features(dataloader, model_generator, model_inception_v3, nz: 
 		for batch_idx, (batch_images, batch_images_names) in enumerate(dataloader):
 			#print(batch_idx, batch_imgs.shape, type(batch_imgs), batch_imgs.dtype)
 			print(batch_idx)
-			real_samples = batch_imgs
+			real_samples = batch_images
 			print(real_samples.shape, type(real_samples), real_samples.dtype)
 			real_features = model_inception_v3(real_samples.to(device)).detach().to('cpu')
 			print(type(real_features), real_features.dtype, real_features.shape)
@@ -69,51 +66,6 @@ def get_real_fake_features(dataloader, model_generator, model_inception_v3, nz: 
 			print()
 	print(len(real_features_list), len(fake_features_list))
 	return torch.cat(tensors=real_features_list, dim=0), torch.cat(tensors=fake_features_list, dim=0)
-
-def calculate_fid(real_images, generated_images, inception_model, batch_size=64, device='cuda'):
-	def get_activations(images, model, batch_size=64, device='cuda'):
-		model.eval()
-		num_images = images.size(0)
-		activations = torch.zeros((num_images, 2048), dtype=torch.float32, device=device)
-		with torch.no_grad():
-			for i in range(0, num_images, batch_size):
-				batch = images[i:i + batch_size].to(device)
-				pred = model(batch)[0]
-				activations[i:i + batch_size] = adaptive_avg_pool2d(pred, (1, 1)).squeeze(3).squeeze(2)
-		return activations
-
-	real_activations = get_activations(real_images, inception_model, batch_size, device)
-	fake_activations = get_activations(generated_images, inception_model, batch_size, device)
-
-	# Calculate mean and covariance of activations
-	mu_real, sigma_real = real_activations.mean(dim=0), torch_cov(real_activations, rowvar=False)
-	mu_fake, sigma_fake = fake_activations.mean(dim=0), torch_cov(fake_activations, rowvar=False)
-
-	# Calculate FID
-	diff = mu_real - mu_fake
-	covmean, _ = sqrtm(sigma_real @ sigma_fake, disp=False)
-	if not np.isfinite(covmean).all():
-		cov_corr = torch.trace(sigma_real) + torch.trace(sigma_fake) - 2 * torch.trace(sqrtm(sigma_real @ sigma_fake))
-		covmean = covmean + torch.eye(covmean.shape[0], device=device) * cov_corr
-
-	fid = diff @ diff + torch.trace(sigma_real) + torch.trace(sigma_fake) - 2 * torch.trace(covmean)
-	return fid.item()
-
-def torch_cov(m, rowvar=False):
-	if m.dim() > 2:
-		raise ValueError('m has more than 2 dimensions')
-	if m.dim() < 2:
-		m = m.view(1, -1)
-	if not rowvar and m.size(0) != 1:
-		m = m.t()
-	fact = 1.0 / (m.size(1) - 1)
-	m -= torch.mean(m, dim=1, keepdim=True)
-	mt = m.t()
-	return fact * m @ mt
-
-# # Example usage:
-# inception_model = models.inception_v3(pretrained=True, aux_logits=False).to(device)
-# fid_score = calculate_fid(real_images, generated_images, inception_model, batch_size=64, device=device)
 
 def save_pickle(pkl, fname:str=""):
 	print(f"Saving {type(pkl)} {fname}")

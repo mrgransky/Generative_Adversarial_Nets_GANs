@@ -33,7 +33,7 @@ sys.dont_write_bytecode = True
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--numWorkers', type=int, default=16, help='number of cpu core(s)')
-parser.add_argument('--batchSZ', type=int, default=4, help='input batch size')
+parser.add_argument('--batchSZ', type=int, default=8, help='input batch size')
 parser.add_argument('--imgSZ', type=int, default=256, help='H & W input images') # can't change now!!
 parser.add_argument('--imgNumCh', type=int, default=3, help='Image channel(s), def: 3 RGB')
 parser.add_argument('--nz', type=int, default=100, help='noise latent z vector size')
@@ -41,7 +41,7 @@ parser.add_argument('--nz', type=int, default=100, help='noise latent z vector s
 parser.add_argument('--feature_g', type=int, default=256)
 parser.add_argument('--feature_d', type=int, default=256)
 
-parser.add_argument('--nepochs', type=int, default=3, help='training epochs')
+parser.add_argument('--nepochs', type=int, default=1, help='training epochs')
 parser.add_argument('--lr', type=float, default=2e-4, help='learning rate')
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
 
@@ -113,7 +113,7 @@ dataloader = torch.utils.data.DataLoader(
 	shuffle=True, 
 	num_workers=opt.numWorkers,
 )
-print(f"dataset contans: {len(dataset)} images | dataloader with batch_size: {opt.batchSZ}: {len(dataloader)}")
+print(f"dataset contans: {len(dataset)} images | dataloader with batch_size: {opt.batchSZ}: {len(dataloader)} batches")
 #visualize(dataloader=dataloader)
 
 def get_gen_disc_models(device: str="cuda"):
@@ -266,7 +266,7 @@ def train(init_gen_model=None, init_disc_model=None):
 		# Check if the current model has lower losses than the best
 		if mean_discriminator_loss < best_discriminator_loss:
 			print(
-				f">> Found better Discriminator model [epoch: {epoch+1}] "
+				f">> Found better Discriminator model @ epoch: {epoch+1} "
 				f"prev_best_loss: {best_discriminator_loss} curr_loss: {mean_discriminator_loss}"
 			)
 			best_discriminator_loss = mean_discriminator_loss
@@ -275,7 +275,7 @@ def train(init_gen_model=None, init_disc_model=None):
 
 		if mean_generator_loss < best_generator_loss:
 			print(
-				f">> Found better Generator model [epoch: {epoch+1}] "
+				f">> Found better Generator model @ epoch: {epoch+1} "
 				f"prev_best_loss: {best_generator_loss} curr_loss: {mean_generator_loss}"
 			)
 			best_generator_loss = mean_generator_loss
@@ -292,24 +292,24 @@ def train(init_gen_model=None, init_disc_model=None):
 	torch.save(best_discriminator_state_dict, os.path.join(checkponts_dir, f"Discriminator_model_best.pth"))
 
 	save_pickle(
-		pkl=disc_losses, 
+		pkl=disc_losses,
 		fname=os.path.join(models_dir, f"{len(disc_losses)}_disc_losses.gz"),
 	)
 
 	save_pickle(
-		pkl=gen_losses, 
+		pkl=gen_losses,
 		fname=os.path.join(models_dir, f"{len(gen_losses)}_gen_losses.gz"),
 	)
 
 	plot_losses(
-		disc_losses=disc_losses, 
-		gen_losses=gen_losses, 
+		disc_losses=disc_losses,
+		gen_losses=gen_losses,
 		loss_fname=os.path.join(metrics_dir, f"loss.png"),
 	)
 
 	plot_losses(
-		disc_losses=mean_discriminator_losses, 
-		gen_losses=mean_generator_losses, 
+		disc_losses=mean_discriminator_losses,
+		gen_losses=mean_generator_losses,
 		loss_fname=os.path.join(metrics_dir, f"mean_epoch_loss.png"),
 	)
 
