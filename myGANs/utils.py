@@ -47,10 +47,10 @@ def get_covariance(features):
 	return torch.Tensor(np.cov(features.detach().numpy(), rowvar=False))
 
 def get_real_fake_features(dataloader, model_generator, model_inception_v3, nz: int = 100, device: str="cuda"):
-	real_features_list = []
-	fake_features_list = []
+	real_features_list = list()
+	fake_features_list = list()
 	with torch.no_grad():
-		for batch_idx, (batch_imgs, _) in enumerate(dataloader):
+		for batch_idx, (batch_images, batch_images_names) in enumerate(dataloader):
 			#print(batch_idx, batch_imgs.shape, type(batch_imgs), batch_imgs.dtype)
 			print(batch_idx)
 			real_samples = batch_imgs
@@ -69,9 +69,6 @@ def get_real_fake_features(dataloader, model_generator, model_inception_v3, nz: 
 			print()
 	print(len(real_features_list), len(fake_features_list))
 	return torch.cat(tensors=real_features_list, dim=0), torch.cat(tensors=fake_features_list, dim=0)
-
-
-
 
 def calculate_fid(real_images, generated_images, inception_model, batch_size=64, device='cuda'):
 	def get_activations(images, model, batch_size=64, device='cuda'):
