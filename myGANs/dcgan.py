@@ -55,7 +55,7 @@ opt = parser.parse_args()
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 cudnn.benchmark: bool = True
-display_step: int = 500
+display_step: int = 100
 
 opt.resDIR += f"_epoch_{opt.nepochs}"
 opt.resDIR += f"_batch_SZ_{opt.batchSZ}"
@@ -144,7 +144,7 @@ def test(dataloader, gen, disc, latent_noise_dim: int=100, device: str="cuda"):
 
 	print(f"inception_v3 [weights: DEFAULT]".center(120, "-"))
 	inception_model = torchvision.models.inception_v3(weights="DEFAULT", progress=False).to(device)
-	inception_model.fc = torch.nn.Identity() # get feature layer of a CNN
+	inception_model.fc = torch.nn.Identity() # remove fc or classification layer
 
 	get_param_(model=inception_model)
 
@@ -159,7 +159,7 @@ def test(dataloader, gen, disc, latent_noise_dim: int=100, device: str="cuda"):
 	mu_real = torch.mean(real_features_all, axis=0)
 	sigma_fake = get_covariance(features=fake_features_all)
 	sigma_real = get_covariance(features=real_features_all)
-	with torch.no_grad():
+	with torch.no_grad(): # avoid storing intermediate gradient values,
 		fid = frechet_distance(mu_real, mu_fake, sigma_real, sigma_fake).item()
 		print(f"FID: {fid:.3f}")
 
