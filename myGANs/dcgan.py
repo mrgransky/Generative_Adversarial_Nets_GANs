@@ -265,11 +265,19 @@ def train(init_gen_model=None, init_disc_model=None):
 
 		# Check if the current model has lower losses than the best
 		if mean_discriminator_loss < best_discriminator_loss:
+			print(
+				f">> Found better Discriminator model [epoch: {epoch+1}] "
+				f"prev_best_loss: {best_discriminator_loss} curr_loss: {mean_discriminator_loss}"
+			)
 			best_discriminator_loss = mean_discriminator_loss
 			best_disc_model = netD
 			best_discriminator_state_dict = netD.state_dict()
 
 		if mean_generator_loss < best_generator_loss:
+			print(
+				f">> Found better Generator model [epoch: {epoch+1}] "
+				f"prev_best_loss: {best_generator_loss} curr_loss: {mean_generator_loss}"
+			)
 			best_generator_loss = mean_generator_loss
 			best_gen_model = netG
 			best_generator_state_dict = netG.state_dict()
