@@ -105,8 +105,7 @@ if not os.path.exists(opt.rgbDIR) or len(natsorted( glob.glob( opt.rgbDIR + "/" 
 else:
 	print(f'Already settled with {len(natsorted( glob.glob( opt.rgbDIR + "/" + "*.png" ) ))} RGB images!')
 
-print(f'>> Generating a dataloader for {len(natsorted( glob.glob( opt.rgbDIR + "/" + "*.png" ) ))} RGB images...')
-# custom dataloader
+print(f'Dataloader: {len(natsorted( glob.glob( opt.rgbDIR + "/" + "*.png" ) ))} RGB images...')
 dataset = Sentinel2Dataset(img_dir=opt.rgbDIR, img_sz=opt.imgSZ)
 dataloader = torch.utils.data.DataLoader(
 	dataset=dataset, 
@@ -145,6 +144,8 @@ def test(dataloader, gen, disc, latent_noise_dim: int=100, device: str="cuda"):
 
 	print(f"inception_v3 [weights: DEFAULT]".center(120, "-"))
 	inception_model = torchvision.models.inception_v3(weights="DEFAULT", progress=False).to(device)
+	inception_model.fc = torch.nn.Identity() # get feature layer of a CNN
+
 	get_param_(model=inception_model)
 
 	real_features_all, fake_features_all = get_real_fake_features(
@@ -161,7 +162,6 @@ def test(dataloader, gen, disc, latent_noise_dim: int=100, device: str="cuda"):
 	with torch.no_grad():
 		fid = frechet_distance(mu_real, mu_fake, sigma_real, sigma_fake).item()
 		print(f"FID: {fid:.3f}")
-
 
 def train(init_gen_model=None, init_disc_model=None):
 	print(f"Training with {torch.cuda.device_count()} GPU(s) & {opt.numWorkers} CPU core(s)".center(100, " "))
@@ -323,6 +323,8 @@ def main():
 		dataloader=dataloader,
 		gen=model_gen, 
 		disc=model_disc,
+		latent_noise_dim=opt.nz,
+		device=device,
 	)
 
 if __name__ == '__main__':
