@@ -7,8 +7,8 @@
 #SBATCH --mail-type=END,FAIL
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=24
-#SBATCH --mem=64G
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=24G
 #SBATCH --partition=gpu
 #SBATCH --time=03-00:00:00
 #SBATCH --gres=gpu:v100:1
@@ -37,7 +37,7 @@ python -u dcgan.py \
 					--rgbDIR $datasetDIR \
 					--resDIR $resultsDIR \
 					--numWorkers $SLURM_CPUS_PER_TASK \
-					--nepochs 40 \
+					--nepochs 50 \
 					# --batchSZ 4 --spectralNormDisc=true
 
 
