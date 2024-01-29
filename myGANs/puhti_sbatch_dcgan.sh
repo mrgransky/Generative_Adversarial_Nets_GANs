@@ -7,7 +7,7 @@
 #SBATCH --mail-type=END,FAIL
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=4
 #SBATCH --mem=16G
 #SBATCH --partition=gpu
 #SBATCH --time=03-00:00:00
@@ -42,7 +42,7 @@ python -u dcgan.py \
 					--spectralNormDisc=true \
 					--spectralNormGen=true \
 				
-				
+
 done_txt="$user finished Slurm job: `date`"
 echo -e "${done_txt//?/$ch}\n${done_txt}\n${done_txt//?/$ch}"
 # echo "${stars// /*}"
