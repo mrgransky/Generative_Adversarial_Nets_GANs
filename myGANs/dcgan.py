@@ -32,7 +32,7 @@ sys.dont_write_bytecode = True
 # DCGAN ref link: https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html#introduction
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--nepochs', type=int, default=50, help='training epochs')
+parser.add_argument('--nepochs', type=int, default=6, help='training epochs')
 parser.add_argument('--batchSZ', type=int, default=8, help='input batch size')
 parser.add_argument('--imgSZ', type=int, default=256, help='H & W input images') # can't change now!!
 parser.add_argument('--imgNumCh', type=int, default=3, help='Image channel(s), def: 3 RGB')
@@ -41,7 +41,7 @@ parser.add_argument('--nz', type=int, default=100, help='noise latent z vector s
 parser.add_argument('--feature_g', type=int, default=256)
 parser.add_argument('--feature_d', type=int, default=256)
 
-parser.add_argument('--lr', type=float, default=2e-4, help='learning rate')
+parser.add_argument('--lr', type=float, default=3e-4, help='learning rate')
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
 
 parser.add_argument('--spectralNormGen', type=bool, default=False, help='Spectrally Normalized Generator')
@@ -49,14 +49,14 @@ parser.add_argument('--spectralNormDisc', type=bool, default=False, help='Spectr
 
 parser.add_argument('--resDIR', required=True, help='folder to output images and model checkpoints')
 parser.add_argument('--rgbDIR', required=True, help='path to RGB dataset')
-parser.add_argument('--numWorkers', type=int, default=8, help='number of cpu core(s)')
+parser.add_argument('--numWorkers', type=int, default=16, help='number of cpu core(s)')
 parser.add_argument('--nGPUs', type=int, default=1, help='number of GPU(s)') # torch.cuda.device_count()
 
 opt = parser.parse_args()
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 cudnn.benchmark: bool = True
-display_step: int = 100
+display_step: int = 500
 
 opt.resDIR += f"_epoch_{opt.nepochs}"
 opt.resDIR += f"_batch_SZ_{opt.batchSZ}"
@@ -296,24 +296,22 @@ def train(init_gen_model=None, init_disc_model=None):
 
 	save_pickle(
 		pkl=disc_losses,
-		fname=os.path.join(models_dir, f"{len(disc_losses)}_disc_losses.gz"),
+		fname=os.path.join(models_dir, f"disc_losses.gz"),
 	)
 
 	save_pickle(
 		pkl=gen_losses,
-		fname=os.path.join(models_dir, f"{len(gen_losses)}_gen_losses.gz"),
+		fname=os.path.join(models_dir, f"gen_losses.gz"),
 	)
 
-	plot_losses(
-		disc_losses=disc_losses,
-		gen_losses=gen_losses,
-		loss_fname=os.path.join(metrics_dir, f"loss.png"),
+	save_pickle(
+		pkl=mean_discriminator_losses,
+		fname=os.path.join(models_dir, f"mean_disc_losses.gz"),
 	)
 
-	plot_losses(
-		disc_losses=mean_discriminator_losses,
-		gen_losses=mean_generator_losses,
-		loss_fname=os.path.join(metrics_dir, f"mean_epoch_loss.png"),
+	save_pickle(
+		pkl=mean_generator_losses,
+		fname=os.path.join(models_dir, f"mean_gen_losses.gz"),
 	)
 
 	return best_gen_model, best_disc_model
@@ -329,6 +327,24 @@ def main():
 	except Exception as e:
 		print(f"<!> {e}")
 		model_gen, model_disc = train(init_gen_model, init_disc_model)
+
+	try:
+		plot_losses(
+			disc_losses=load_pickle(fpath=os.path.join(models_dir, f"disc_losses.gz")),
+			gen_losses=load_pickle(fpath=os.path.join(models_dir, f"gen_losses.gz")),
+			loss_fname=os.path.join(metrics_dir, f"losses_iteration.png"),
+		)
+	except Exception as e:
+		print(f"<!> {e}")
+
+	try:
+		plot_losses(
+			disc_losses=load_pickle(fpath=os.path.join(models_dir, f"mean_disc_losses.gz")),
+			gen_losses=load_pickle(fpath=os.path.join(models_dir, f"mean_gen_losses.gz")),
+			loss_fname=os.path.join(metrics_dir, f"mean_losses_epoch.png"),
+		)
+	except Exception as e:
+		print(f"<!> {e}")
 
 	test(
 		dataloader=dataloader,

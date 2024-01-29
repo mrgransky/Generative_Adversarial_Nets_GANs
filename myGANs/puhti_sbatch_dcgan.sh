@@ -1,14 +1,14 @@
 #!/bin/bash
 
 #SBATCH --account=project_2004072
-#SBATCH --job-name=sngan
+#SBATCH --job-name=sngan_disc_gen
 #SBATCH --output=/scratch/project_2004072/GANs/trash/GANs_logs/%x_%N_%j.out
 #SBATCH --mail-user=farid.alijani@gmail.com
 #SBATCH --mail-type=END,FAIL
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=24G
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=16G
 #SBATCH --partition=gpu
 #SBATCH --time=03-00:00:00
 #SBATCH --gres=gpu:v100:1
@@ -38,10 +38,10 @@ python -u dcgan.py \
 					--resDIR $resultsDIR \
 					--numWorkers $SLURM_CPUS_PER_TASK \
 					--nepochs 50 \
-					--batchSZ 4 \ 
+					--batchSZ 8 \ 
 					--spectralNormDisc=true \
-
-
+					--spectralNormGen=true \
+				
 done_txt="$user finished Slurm job: `date`"
 echo -e "${done_txt//?/$ch}\n${done_txt}\n${done_txt//?/$ch}"
 # echo "${stars// /*}"

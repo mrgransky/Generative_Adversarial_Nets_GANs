@@ -48,28 +48,27 @@ def get_real_fake_features(dataloader, model_generator, model_inception_v3, nz: 
 	fake_features_list = list()
 	with torch.no_grad():
 		for batch_idx, (batch_images, batch_images_names) in enumerate(dataloader):
-			#print(batch_idx, batch_images.shape, type(batch_images), batch_images.dtype)
-			print(batch_idx)
+			# print(batch_idx)
 			real_samples = batch_images
-			print(real_samples.shape, type(real_samples), real_samples.dtype, real_samples.device)
+			# print(real_samples.shape, type(real_samples), real_samples.dtype, real_samples.device)
 			real_samples = Fun.interpolate(input=real_samples, size=(299, 299), mode='bilinear', align_corners=False)
-			print(f">> Entering {real_samples.shape} into inception_v3 model...")
-			print(model_inception_v3(real_samples.to(device)).requires_grad)
+			# print(f">> Entering {real_samples.shape} into inception_v3 model...")
+			# print(model_inception_v3(real_samples.to(device)).requires_grad)
 			real_features = model_inception_v3(real_samples.to(device)).detach().to('cpu')
-			print(type(real_features), real_features.dtype, real_features.shape, real_samples.device)
+			# print(type(real_features), real_features.dtype, real_features.shape, real_samples.device)
 			real_features_list.append(real_features)
 
 			# Generator to genrate fake_samples and fake_features:
 			fake_noise = torch.randn(len(batch_images), nz, 1, 1, device=device) # [nb x nz, 1, 1]
 			fake_samples = model_generator(fake_noise) # torch.Size([nb, nch, feature_g, feature_g])
 			fake_samples = Fun.interpolate(fake_samples, size=(299, 299), mode='bilinear', align_corners=False)
-			print(fake_samples.shape, type(fake_samples), fake_samples.dtype)
+			# print(fake_samples.shape, type(fake_samples), fake_samples.dtype)
 			fake_features = model_inception_v3(fake_samples.to(device)).detach().to('cpu')
-			print(type(fake_features), fake_features.dtype, fake_features.shape)
+			# print(type(fake_features), fake_features.dtype, fake_features.shape)
 			fake_features_list.append(fake_features)
 
-			print()
-	print(len(real_features_list), len(fake_features_list))
+			# print()
+	# print(len(real_features_list), len(fake_features_list))
 	return torch.cat(tensors=real_features_list, dim=0), torch.cat(tensors=fake_features_list, dim=0)
 
 def save_pickle(pkl, fname:str=""):
@@ -85,14 +84,32 @@ def save_pickle(pkl, fname:str=""):
 	fsize_dump = os.stat( fname ).st_size / 1e6
 	print(f"Elapsed_t: {elpt:.3f} s | {fsize_dump:.4f} MB".center(100, " "))
 
+def load_pickle(fpath:str="unknown",):
+	print(f"Checking for existence? {fpath}")
+	st_t = time.time()
+	try:
+		with gzip.open(fpath, mode='rb') as f:
+			pkl=dill.load(f)
+	except gzip.BadGzipFile as ee:
+		print(f"<!> {ee} gzip.open NOT functional => traditional openning...")
+		with open(fpath, mode='rb') as f:
+			pkl=dill.load(f)
+	except Exception as e:
+		print(f"<<!>> {e} pandas read_pkl...")
+		pkl = pd.read_pickle(fpath)
+	elpt = time.time()-st_t
+	fsize = os.stat( fpath ).st_size / 1e6
+	print(f"Loaded in: {elpt:.3f} s | {type(pkl)} | {fsize:.2f} MB".center(130, " "))
+	return pkl
+
 def plot_losses(disc_losses: List[float], gen_losses: List[float], loss_fname: str="path/to/savingDIR/loss.png"):
-	print(f'>> Saving {loss_fname.split("/")[-1].replace(".png", "")}: Disc: {len(disc_losses)} | Gen: {len(gen_losses)} ...')
+	print(f'>> Plotting {loss_fname.split("/")[-1].replace(".png", "")} Disc: {len(disc_losses)} | Gen: {len(gen_losses)} ...')
 	
 	plt.figure(figsize=(10, 4), facecolor='white')
 	plt.plot(disc_losses, label='Disc', alpha=0.85, color="blue")
 	plt.plot(gen_losses, label='Gen', alpha=0.4, color="red")
-	plt.xlabel('Iteration')
-	plt.ylabel(f'{loss_fname.split("/")[-1].replace(".png", "")}')
+	plt.xlabel(loss_fname.split("/")[-1].replace(".png", "").split("_")[-1].title()) # Iteration / Epoch
+	plt.ylabel(" ".join(loss_fname.split("/")[-1].replace(".png", "").split("_")[:-1]).title()) # Losses / Mean Losses
 	plt.title(f'Generator & Discriminator {loss_fname.split("/")[-1].replace(".png", "")}')
 	plt.legend(ncol=2, frameon=False)
 	
