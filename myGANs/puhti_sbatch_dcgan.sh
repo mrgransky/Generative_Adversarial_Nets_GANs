@@ -31,14 +31,15 @@ echo "${stars// /*}"
 echo "<> Using $SLURM_CLUSTER_NAME conda env from tykky module..."
 
 datasetDIR="/scratch/project_2004072/sentinel2-l1c_RGB_IMGs"
-resultsDIR="/scratch/project_2004072/GANs/misc_sngan" ########## must be adjusted! ##########
+resultsDIR="/scratch/project_2004072/GANs/misc_$SLURM_JOB_NAME" ########## must be adjusted! ##########
 
 python -u dcgan.py \
 					--rgbDIR $datasetDIR \
 					--resDIR $resultsDIR \
 					--numWorkers $SLURM_CPUS_PER_TASK \
 					--nepochs 50 \
-					--batchSZ 4 --spectralNormDisc=true
+					--batchSZ 4 \ 
+					--spectralNormDisc=true \
 
 
 done_txt="$user finished Slurm job: `date`"

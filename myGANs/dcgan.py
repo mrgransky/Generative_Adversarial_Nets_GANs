@@ -49,7 +49,7 @@ parser.add_argument('--spectralNormDisc', type=bool, default=False, help='Spectr
 
 parser.add_argument('--resDIR', required=True, help='folder to output images and model checkpoints')
 parser.add_argument('--rgbDIR', required=True, help='path to RGB dataset')
-parser.add_argument('--numWorkers', type=int, default=16, help='number of cpu core(s)')
+parser.add_argument('--numWorkers', type=int, default=8, help='number of cpu core(s)')
 parser.add_argument('--nGPUs', type=int, default=1, help='number of GPU(s)') # torch.cuda.device_count()
 
 opt = parser.parse_args()
