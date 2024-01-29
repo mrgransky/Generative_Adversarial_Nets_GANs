@@ -59,6 +59,7 @@ opt = parser.parse_args()
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 cudnn.benchmark: bool = True
 display_step: int = 500
+
 GAN_METHODs: List[str] = ["dcgan", "sngan", "wgan"]
 
 opt.resDIR += f"_{GAN_METHODs[opt.ganMethodIdx]}"
