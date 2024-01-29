@@ -61,6 +61,7 @@ cudnn.benchmark: bool = True
 display_step: int = 500
 GAN_METHODs: List[str] = ["dcgan", "sngan", "wgan"]
 
+opt.resDIR += f"_{GAN_METHODs[opt.ganMethodIdx]}"
 opt.resDIR += f"_epoch_{opt.nepochs}"
 opt.resDIR += f"_batch_SZ_{opt.batchSZ}"
 opt.resDIR += f"_img_SZ_{opt.imgSZ}"

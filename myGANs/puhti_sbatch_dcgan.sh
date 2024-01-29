@@ -29,10 +29,10 @@ echo "CPUS_ON_NODE: $SLURM_CPUS_ON_NODE, CPUS/TASK: $SLURM_CPUS_PER_TASK, MEM/CP
 echo "nTASKS/CORE: $SLURM_NTASKS_PER_CORE, nTASKS/NODE: $SLURM_NTASKS_PER_NODE"
 echo "THREADS/CORE: $SLURM_THREADS_PER_CORE"
 echo "${stars// /*}"
-echo "$SLURM_CLUSTER_NAME  venv from tykky module..."
+echo "$SLURM_CLUSTER_NAME venv from tykky module..."
 
 datasetDIR="/scratch/project_2004072/sentinel2-l1c_RGB_IMGs"
-resultsDIR="/scratch/project_2004072/GANs/misc" ########## must be adjusted! ##########
+resultsDIR="/scratch/project_2004072/GANs/misc_test" ########## must be adjusted! ##########
 
 python -u dcgan.py \
 					--rgbDIR $datasetDIR \
@@ -42,10 +42,7 @@ python -u dcgan.py \
 					--nepochs 50 \
 					--batchSZ 8 \
 					--ganMethodIdx $SLURM_ARRAY_TASK_ID \
-					--spectralNormDisc=true \
-					--spectralNormGen=true \
 				
-
 done_txt="$user finished Slurm job: `date`"
 echo -e "${done_txt//?/$ch}\n${done_txt}\n${done_txt//?/$ch}"
 # echo "${stars// /*}"
