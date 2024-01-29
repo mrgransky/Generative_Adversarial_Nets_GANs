@@ -50,6 +50,7 @@ parser.add_argument('--spectralNormDisc', type=bool, default=False, help='Spectr
 parser.add_argument('--resDIR', required=True, help='folder to output images and model checkpoints')
 parser.add_argument('--rgbDIR', required=True, help='path to RGB dataset')
 parser.add_argument('--numWorkers', type=int, default=16, help='number of cpu core(s)')
+parser.add_argument('--nGPUs', type=int, default=1, help='number of GPU(s)') # torch.cuda.device_count()
 
 opt = parser.parse_args()
 
@@ -65,7 +66,7 @@ opt.resDIR += f"_lr_{opt.lr}"
 opt.resDIR += f"_feature_g_{opt.feature_g}"
 opt.resDIR += f"_feature_d_{opt.feature_d}"
 opt.resDIR += f"_device_{device}"
-opt.resDIR += f"_ngpu_{torch.cuda.device_count()}"
+opt.resDIR += f"_ngpu_{opt.nGPUs}"
 opt.resDIR += f"_display_step_{display_step}"
 opt.resDIR += f"_numWorkers_{opt.numWorkers}"
 
@@ -120,7 +121,7 @@ print(f"dataset contans: {len(dataset)} images | dataloader with batch_size: {op
 def get_gen_disc_models(device: str="cuda"):
 	print(f"Generator [spectral_norm: {opt.spectralNormGen}]".center(120, "-"))
 	model_generator = Generator(
-		ngpu=torch.cuda.device_count(), 
+		ngpu=opt.nGPUs, 
 		nz=int(opt.nz), 
 		feature_g=int(opt.feature_g), 
 		nCh=int(opt.imgNumCh),
@@ -130,7 +131,7 @@ def get_gen_disc_models(device: str="cuda"):
 	
 	print(f"Discriminator [spectral_norm: {opt.spectralNormDisc}]".center(120, "-"))
 	model_discriminator = Discriminator(
-		ngpu=torch.cuda.device_count(), 
+		ngpu=opt.nGPUs, 
 		feature_d=int(opt.feature_d), 
 		nCh=int(opt.imgNumCh),
 		spectral_norm = opt.spectralNormDisc,
@@ -139,7 +140,7 @@ def get_gen_disc_models(device: str="cuda"):
 	return model_generator, model_discriminator
 
 def test(dataloader, gen, disc, latent_noise_dim: int=100, device: str="cuda"):
-	print(f"Test with {device}, {torch.cuda.device_count()} GPU(s) & {opt.numWorkers} CPU core(s)".center(100, " "))
+	print(f"Test with {device}, {opt.nGPUs} GPU(s) & {opt.numWorkers} CPU core(s)".center(100, " "))
 	gen.eval()
 	disc.eval()
 
@@ -165,7 +166,7 @@ def test(dataloader, gen, disc, latent_noise_dim: int=100, device: str="cuda"):
 		print(f"FID: {fid:.3f}")
 
 def train(init_gen_model=None, init_disc_model=None):
-	print(f"Training with {torch.cuda.device_count()} GPU(s) & {opt.numWorkers} CPU core(s)".center(100, " "))
+	print(f"Training with {opt.nGPUs} GPU(s) & {opt.numWorkers} CPU core(s)".center(100, " "))
 
 	if init_gen_model and init_disc_model:
 		netG = init_gen_model		
