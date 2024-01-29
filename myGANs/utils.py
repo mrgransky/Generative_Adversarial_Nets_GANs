@@ -60,7 +60,7 @@ def get_real_fake_features(dataloader, model_generator, model_inception_v3, nz: 
 			real_features_list.append(real_features)
 
 			# Generator to genrate fake_samples and fake_features:
-			fake_noise = torch.randn(len(batch_images), nz, 1, 1 device=device) # [nb x nz, 1, 1]
+			fake_noise = torch.randn(len(batch_images), nz, 1, 1, device=device) # [nb x nz, 1, 1]
 			fake_samples = model_generator(fake_noise) # torch.Size([nb, nch, feature_g, feature_g])
 			fake_samples = Fun.interpolate(fake_samples, size=(299, 299), mode='bilinear', align_corners=False)
 			print(fake_samples.shape, type(fake_samples), fake_samples.dtype)
