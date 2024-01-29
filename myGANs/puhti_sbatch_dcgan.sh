@@ -1,17 +1,18 @@
 #!/bin/bash
 
 #SBATCH --account=project_2004072
-#SBATCH --job-name=sngan_disc_gen
+#SBATCH --job-name=gans_test
 #SBATCH --output=/scratch/project_2004072/GANs/trash/GANs_logs/%x_%N_%j.out
 #SBATCH --mail-user=farid.alijani@gmail.com
 #SBATCH --mail-type=END,FAIL
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=8
 #SBATCH --mem=12G
-#SBATCH --partition=gpu
-#SBATCH --time=03-00:00:00
+#SBATCH --partition=gputest
+#SBATCH --time=00-00:15:00
 #SBATCH --gres=gpu:v100:1
+#SBATCH --array=0-1
 
 user="`whoami`"
 stars=$(printf '%*s' 100 '')
@@ -31,7 +32,7 @@ echo "${stars// /*}"
 echo "<> Using $SLURM_CLUSTER_NAME conda env from tykky module..."
 
 datasetDIR="/scratch/project_2004072/sentinel2-l1c_RGB_IMGs"
-resultsDIR="/scratch/project_2004072/GANs/misc_$SLURM_JOB_NAME" ########## must be adjusted! ##########
+resultsDIR="/scratch/project_2004072/GANs/misc" ########## must be adjusted! ##########
 
 python -u dcgan.py \
 					--rgbDIR $datasetDIR \
@@ -39,7 +40,8 @@ python -u dcgan.py \
 					--numWorkers $SLURM_CPUS_PER_TASK \
 					--lr 0.0003 \
 					--nepochs 50 \
-					--batchSZ 8 \ 
+					--batchSZ 8 \
+					--ganMethodIdx $SLURM_ARRAY_TASK_ID \
 					--spectralNormDisc=true \
 					--spectralNormGen=true \
 				

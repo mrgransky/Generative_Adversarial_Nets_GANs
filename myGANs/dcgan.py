@@ -52,12 +52,14 @@ parser.add_argument('--rgbDIR', required=True, help='path to RGB dataset')
 
 parser.add_argument('--numWorkers', type=int, default=16, help='number of cpu core(s)')
 parser.add_argument('--nGPUs', type=int, default=1, help='number of GPU(s)') # torch.cuda.device_count()
+parser.add_argument('--ganMethodIdx', type=int, default=0, help='GAN method')
 
 opt = parser.parse_args()
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 cudnn.benchmark: bool = True
 display_step: int = 500
+GAN_METHODs: List[str] = ["dcgan", "sngan", "wgan"]
 
 opt.resDIR += f"_epoch_{opt.nepochs}"
 opt.resDIR += f"_batch_SZ_{opt.batchSZ}"
@@ -71,6 +73,10 @@ opt.resDIR += f"_ngpu_{opt.nGPUs}"
 opt.resDIR += f"_display_step_{display_step}"
 opt.resDIR += f"_numWorkers_{opt.numWorkers}"
 
+if GAN_METHODs[opt.ganMethodIdx] == "sngan":
+	opt.spectralNormGen = True
+	opt.spectralNormDisc = True
+
 if opt.spectralNormGen:
 	opt.resDIR += f"_spectralNormGen_{opt.spectralNormGen}"
 
@@ -78,6 +84,7 @@ if opt.spectralNormDisc:
 	opt.resDIR += f"_spectralNormDisc_{opt.spectralNormDisc}"
 
 print(opt)
+sys.exit(0)
 
 checkponts_dir = os.path.join(opt.resDIR, "checkpoints")
 metrics_dir = os.path.join(opt.resDIR, "metrics")
