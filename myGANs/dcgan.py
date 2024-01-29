@@ -21,7 +21,7 @@ sys.dont_write_bytecode = True
 
 # how to run:
 # in Puhti:
-# python dcgan.py --rgbDIR /scratch/project_2004072/sentinel2-l1c_RGB_IMGs --resDIR /scratch/project_2004072/GANs/misc
+# python dcgan.py --rgbDIR /scratch/project_2004072/sentinel2-l1c_RGB_IMGs --resDIR /scratch/project_2004072/GANs/misc_sngan
 
 # in Puota:
 # python dcgan.py --rgbDIR $HOME/datasets/sentinel2-l1c_RGB_IMGs --resDIR $HOME/trash_logs/GANs/misc --batchSZ 64
@@ -32,7 +32,7 @@ sys.dont_write_bytecode = True
 # DCGAN ref link: https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html#introduction
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--numWorkers', type=int, default=16, help='number of cpu core(s)')
+parser.add_argument('--nepochs', type=int, default=50, help='training epochs')
 parser.add_argument('--batchSZ', type=int, default=8, help='input batch size')
 parser.add_argument('--imgSZ', type=int, default=256, help='H & W input images') # can't change now!!
 parser.add_argument('--imgNumCh', type=int, default=3, help='Image channel(s), def: 3 RGB')
@@ -41,7 +41,6 @@ parser.add_argument('--nz', type=int, default=100, help='noise latent z vector s
 parser.add_argument('--feature_g', type=int, default=256)
 parser.add_argument('--feature_d', type=int, default=256)
 
-parser.add_argument('--nepochs', type=int, default=4, help='training epochs')
 parser.add_argument('--lr', type=float, default=2e-4, help='learning rate')
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
 
@@ -50,6 +49,7 @@ parser.add_argument('--spectralNormDisc', type=bool, default=False, help='Spectr
 
 parser.add_argument('--resDIR', required=True, help='folder to output images and model checkpoints')
 parser.add_argument('--rgbDIR', required=True, help='path to RGB dataset')
+parser.add_argument('--numWorkers', type=int, default=16, help='number of cpu core(s)')
 
 opt = parser.parse_args()
 
