@@ -49,6 +49,7 @@ parser.add_argument('--spectralNormDisc', type=bool, default=False, help='Spectr
 
 parser.add_argument('--resDIR', required=True, help='folder to output images and model checkpoints')
 parser.add_argument('--rgbDIR', required=True, help='path to RGB dataset')
+
 parser.add_argument('--numWorkers', type=int, default=16, help='number of cpu core(s)')
 parser.add_argument('--nGPUs', type=int, default=1, help='number of GPU(s)') # torch.cuda.device_count()
 
@@ -269,8 +270,9 @@ def train(init_gen_model=None, init_disc_model=None):
 		# Check if the current model has lower losses than the best
 		if mean_discriminator_loss < best_discriminator_loss:
 			print(
-				f">> Found better Discriminator model @ epoch: {epoch+1} "
-				f"prev_best_loss: {best_discriminator_loss} curr_loss: {mean_discriminator_loss:.3f}"
+				f"Found better Discriminator model @ epoch: {epoch+1} "
+				f"prev_best_loss: {best_discriminator_loss} "
+				f"curr_loss: {mean_discriminator_loss:.3f}".center(150, " ")
 			)
 			best_discriminator_loss = mean_discriminator_loss
 			best_disc_model = netD
@@ -278,8 +280,9 @@ def train(init_gen_model=None, init_disc_model=None):
 
 		if mean_generator_loss < best_generator_loss:
 			print(
-				f">> Found better Generator model @ epoch: {epoch+1} "
-				f"prev_best_loss: {best_generator_loss} curr_loss: {mean_generator_loss:.3f}"
+				f"Found better Generator model @ epoch: {epoch+1} "
+				f"prev_best_loss: {best_generator_loss} "
+				f"curr_loss: {mean_generator_loss:.3f}".center(150, " ")
 			)
 			best_generator_loss = mean_generator_loss
 			best_gen_model = netG

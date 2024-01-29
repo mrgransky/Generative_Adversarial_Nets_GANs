@@ -37,6 +37,7 @@ python -u dcgan.py \
 					--rgbDIR $datasetDIR \
 					--resDIR $resultsDIR \
 					--numWorkers $SLURM_CPUS_PER_TASK \
+					--lr 0.0003 \
 					--nepochs 50 \
 					--batchSZ 8 \ 
 					--spectralNormDisc=true \
