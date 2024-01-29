@@ -41,7 +41,7 @@ parser.add_argument('--nz', type=int, default=100, help='noise latent z vector s
 parser.add_argument('--feature_g', type=int, default=256)
 parser.add_argument('--feature_d', type=int, default=256)
 
-parser.add_argument('--nepochs', type=int, default=1, help='training epochs')
+parser.add_argument('--nepochs', type=int, default=4, help='training epochs')
 parser.add_argument('--lr', type=float, default=2e-4, help='learning rate')
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
 

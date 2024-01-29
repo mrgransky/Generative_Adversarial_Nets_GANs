@@ -52,6 +52,8 @@ def get_real_fake_features(dataloader, model_generator, model_inception_v3, nz: 
 			print(batch_idx)
 			real_samples = batch_images
 			print(real_samples.shape, type(real_samples), real_samples.dtype)
+			real_samples = Fun.interpolate(input=real_samples, size=(299, 299), mode='bilinear', align_corners=False)
+			print(f">> Entering {real_samples.shape} into inception_v3 model...")
 			real_features = model_inception_v3(real_samples.to(device)).detach().to('cpu')
 			print(type(real_features), real_features.dtype, real_features.shape)
 			real_features_list.append(real_features)
