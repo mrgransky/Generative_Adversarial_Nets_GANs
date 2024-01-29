@@ -84,7 +84,6 @@ if opt.spectralNormDisc:
 	opt.resDIR += f"_spectralNormDisc_{opt.spectralNormDisc}"
 
 print(opt)
-sys.exit(0)
 
 checkponts_dir = os.path.join(opt.resDIR, "checkpoints")
 metrics_dir = os.path.join(opt.resDIR, "metrics")
@@ -125,6 +124,7 @@ dataloader = torch.utils.data.DataLoader(
 )
 print(f"dataset contans: {len(dataset)} images | dataloader with batch_size: {opt.batchSZ}: {len(dataloader)} batches")
 #visualize(dataloader=dataloader)
+sys.exit(0)
 
 def get_gen_disc_models(device: str="cuda"):
 	print(f"Generator [spectral_norm: {opt.spectralNormGen}]".center(120, "-"))

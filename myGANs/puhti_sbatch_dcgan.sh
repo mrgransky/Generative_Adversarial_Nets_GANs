@@ -1,13 +1,13 @@
 #!/bin/bash
 
 #SBATCH --account=project_2004072
-#SBATCH --job-name=gans_test
-#SBATCH --output=/scratch/project_2004072/GANs/trash/GANs_logs/%x_%N_%j.out
+#SBATCH --job-name=gans_method
+#SBATCH --output=/scratch/project_2004072/GANs/trash/GANs_logs/%x_%a_%N_%j_%A.out
 #SBATCH --mail-user=farid.alijani@gmail.com
 #SBATCH --mail-type=END,FAIL
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=2
 #SBATCH --mem=12G
 #SBATCH --partition=gputest
 #SBATCH --time=00-00:15:00
@@ -29,7 +29,7 @@ echo "CPUS_ON_NODE: $SLURM_CPUS_ON_NODE, CPUS/TASK: $SLURM_CPUS_PER_TASK, MEM/CP
 echo "nTASKS/CORE: $SLURM_NTASKS_PER_CORE, nTASKS/NODE: $SLURM_NTASKS_PER_NODE"
 echo "THREADS/CORE: $SLURM_THREADS_PER_CORE"
 echo "${stars// /*}"
-echo "<> Using $SLURM_CLUSTER_NAME conda env from tykky module..."
+echo "$SLURM_CLUSTER_NAME  venv from tykky module..."
 
 datasetDIR="/scratch/project_2004072/sentinel2-l1c_RGB_IMGs"
 resultsDIR="/scratch/project_2004072/GANs/misc" ########## must be adjusted! ##########
