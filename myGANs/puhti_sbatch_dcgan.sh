@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --account=project_2004072
-#SBATCH --job-name=gans_method
+#SBATCH --job-name=gans_test_method
 #SBATCH --output=/scratch/project_2004072/GANs/trash/GANs_logs/%x_%a_%N_%j_%A.out
 #SBATCH --mail-user=farid.alijani@gmail.com
 #SBATCH --mail-type=END,FAIL
