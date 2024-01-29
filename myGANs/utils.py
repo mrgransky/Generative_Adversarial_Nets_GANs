@@ -56,17 +56,18 @@ def get_real_fake_features(dataloader, model_generator, model_inception_v3, nz: 
 			print(f">> Entering {real_samples.shape} into inception_v3 model...")
 			print(model_inception_v3(real_samples.to(device)).requires_grad)
 			real_features = model_inception_v3(real_samples.to(device)).detach().to('cpu')
-
 			print(type(real_features), real_features.dtype, real_features.shape, real_samples.device)
 			real_features_list.append(real_features)
+
 			# Generator to genrate fake_samples and fake_features:
-			fake_noise = torch.randn(len(batch_images), nz, device=device) # nb x nz
+			fake_noise = torch.randn(len(batch_images), nz, 1, 1 device=device) # [nb x nz, 1, 1]
 			fake_samples = model_generator(fake_noise) # torch.Size([nb, nch, feature_g, feature_g])
 			fake_samples = Fun.interpolate(fake_samples, size=(299, 299), mode='bilinear', align_corners=False)
 			print(fake_samples.shape, type(fake_samples), fake_samples.dtype)
 			fake_features = model_inception_v3(fake_samples.to(device)).detach().to('cpu')
 			print(type(fake_features), fake_features.dtype, fake_features.shape)
 			fake_features_list.append(fake_features)
+
 			print()
 	print(len(real_features_list), len(fake_features_list))
 	return torch.cat(tensors=real_features_list, dim=0), torch.cat(tensors=fake_features_list, dim=0)

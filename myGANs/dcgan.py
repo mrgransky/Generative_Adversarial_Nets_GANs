@@ -146,8 +146,9 @@ def test(dataloader, gen, disc, latent_noise_dim: int=100, device: str="cuda"):
 
 	print(f"inception_v3 [weights: DEFAULT]".center(120, "-"))
 	inception_model = torchvision.models.inception_v3(weights="DEFAULT", progress=False).to(device)
-	inception_model.fc = torch.nn.Identity() # remove fc or classification layer
 	inception_model.eval()
+
+	inception_model.fc = torch.nn.Identity() # remove fc or classification layer
 	get_param_(model=inception_model)
 
 	real_features_all, fake_features_all = get_real_fake_features(
@@ -212,7 +213,7 @@ def train(init_gen_model=None, init_disc_model=None):
 			disc_loss_real = criterion(disc_real_pred, torch.ones_like(disc_real_pred))
 			
 			# train with fake generated images
-			fake_noise = torch.randn(cur_batch_size, opt.nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
+			fake_noise = torch.randn(cur_batch_size, opt.nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images			
 			fake = netG(fake_noise)
 			disc_fake_pred = netD(fake.detach())
 			disc_loss_fake = criterion(disc_fake_pred, torch.zeros_like(disc_fake_pred))
