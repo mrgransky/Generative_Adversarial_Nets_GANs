@@ -21,7 +21,7 @@ sys.dont_write_bytecode = True
 
 # how to run:
 # in Puhti:
-# python dcgan.py --rgbDIR /scratch/project_2004072/sentinel2-l1c_RGB_IMGs --resDIR /scratch/project_2004072/GANs/misc_sngan
+# python dcgan.py --rgbDIR /scratch/project_2004072/sentinel2-l1c_RGB_IMGs --resDIR /scratch/project_2004072/GANs/misc_dcgan
 
 # in Puota:
 # python dcgan.py --rgbDIR $HOME/datasets/sentinel2-l1c_RGB_IMGs --resDIR $HOME/trash_logs/GANs/misc --batchSZ 64
@@ -147,7 +147,7 @@ def test(dataloader, gen, disc, latent_noise_dim: int=100, device: str="cuda"):
 	print(f"inception_v3 [weights: DEFAULT]".center(120, "-"))
 	inception_model = torchvision.models.inception_v3(weights="DEFAULT", progress=False).to(device)
 	inception_model.fc = torch.nn.Identity() # remove fc or classification layer
-
+	inception_model.eval()
 	get_param_(model=inception_model)
 
 	real_features_all, fake_features_all = get_real_fake_features(
