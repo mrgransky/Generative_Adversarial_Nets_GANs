@@ -14,7 +14,7 @@ datasetDIR="$HOME_DIR/datasets/sentinel2-l1c_RGB_IMGs"
 resultsDIR="$HOME_DIR/trash_logs/GANs/misc" ########## must be adjusted! ##########
 
 # Activate Conda environment
-source activate py39
+source $HOME_DIR/miniconda3/bin/activate py39
 
 for gan_idx in 0 1
 do
