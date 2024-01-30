@@ -34,4 +34,4 @@ echo -e "${done_txt//?/$ch}\n${done_txt}\n${done_txt//?/$ch}"
 echo "${stars// /*}"
 
 # Deactivate Conda environment
-conda deactivate
+# conda deactivate
