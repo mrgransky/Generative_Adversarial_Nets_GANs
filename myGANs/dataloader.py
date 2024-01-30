@@ -24,6 +24,7 @@ class Sentinel2Dataset(Dataset):
 			# suggested by Google Bard & chatGPT:
 			# transforms.Normalize((0.4336, 0.4326, 0.4284), (0.1969, 0.1951, 0.1925)),
 			# transforms.RandomBrightness(0.2),
+			# transforms.CenterCrop(img_sz), # difference with random cropping!
 			# transforms.RandomContrast(0.2),
 			# transforms.RandomHorizontalFlip(0.5),
 			# transforms.RandomVerticalFlip(0.5),

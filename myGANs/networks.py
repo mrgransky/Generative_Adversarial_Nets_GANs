@@ -103,29 +103,36 @@ class Generator(nn.Module):
 			nn.ConvTranspose2d(in_channels=nz, out_channels=feature_g * 8, kernel_size=4, stride=1, padding=0, bias=False),
 			nn.BatchNorm2d(num_features=feature_g * 8),
 			nn.ReLU(inplace=True),
+			# out: 
 
 			nn.ConvTranspose2d(in_channels=feature_g * 8, out_channels=feature_g * 4, kernel_size=4, stride=2, padding=1, bias=False),
 			nn.BatchNorm2d(num_features=feature_g * 4),
 			nn.ReLU(inplace=True),
+			# out: 
 
 			nn.ConvTranspose2d(in_channels=feature_g * 4, out_channels=feature_g * 2, kernel_size=4, stride=2, padding=1, bias=False),
 			nn.BatchNorm2d(num_features=feature_g * 2),
 			nn.ReLU(inplace=True),
+			# out: 
 
 			nn.ConvTranspose2d(in_channels=feature_g * 2, out_channels=feature_g, kernel_size=4, stride=2, padding=1, bias=False),
 			nn.BatchNorm2d(num_features=feature_g),
 			nn.ReLU(inplace=True),
+			# out: 
 
 			nn.ConvTranspose2d(in_channels=feature_g, out_channels=feature_g, kernel_size=4, stride=2, padding=1, bias=False),
 			nn.BatchNorm2d(num_features=feature_g),
 			nn.ReLU(inplace=True),
+			# out: 
 
 			nn.ConvTranspose2d(in_channels=feature_g, out_channels=feature_g, kernel_size=4, stride=2, padding=1, bias=False),
 			nn.BatchNorm2d(num_features=feature_g),
 			nn.ReLU(inplace=True),
+			# out: 
 
 			nn.ConvTranspose2d(in_channels=feature_g, out_channels=nCh, kernel_size=4, stride=2, padding=1, bias=False),
 			nn.Tanh()  # output normalized to [-1, 1]
+			# out: 
 		]
 
 		if self.spectral_norm:
@@ -133,12 +140,22 @@ class Generator(nn.Module):
 
 		self.main = nn.Sequential(*layers)
 
-	def forward(self, input):
-		if input.is_cuda and self.ngpu > 1:
-			output = torch.nn.parallel.data_parallel(self.main, input, range(self.ngpu))
-		else:
-			output = self.main(input)  # [nb, ch, 256, 256]
-		return output
+	# def forward(self, input):
+	# 	if input.is_cuda and self.ngpu > 1:
+	# 		output = torch.nn.parallel.data_parallel(self.main, input, range(self.ngpu))
+	# 	else:
+	# 		print(input.shape, type(input), input.dtype, input.device)
+	# 		output = self.main(input)  # [nb, ch, 256, 256]
+	# 		print(output.shape, type(output), output.dtype, output.device)
+	# 		print()
+	# 	return output
+
+	def forward(self, input_noise):
+		# print(input_noise.shape, type(input_noise), input_noise.dtype, input_noise.device)
+		out = self.main(input_noise.view(input_noise.size(0), -1, 1, 1))
+		# print(out.shape, type(out), out.dtype, out.device)
+		# print()
+		return out
 
 class Discriminator(nn.Module):
 	def __init__(self, ngpu: int = 1, feature_d: int = 256, nCh: int = 3, spectral_norm: bool = False):

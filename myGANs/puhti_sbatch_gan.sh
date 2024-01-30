@@ -1,16 +1,16 @@
 #!/bin/bash
 
 #SBATCH --account=project_2004072
-#SBATCH --job-name=gans_method
+#SBATCH --job-name=gans_new_GEN_method
 #SBATCH --output=/scratch/project_2004072/GANs/trash/GANs_logs/%x_%a_%N_%j_%A.out
 #SBATCH --mail-user=farid.alijani@gmail.com
 #SBATCH --mail-type=END,FAIL
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=2
+#SBATCH --cpus-per-task=4
 #SBATCH --mem=8G
 #SBATCH --partition=gpu
-#SBATCH --time=03-00:00:00
+#SBATCH --time=01-00:00:00
 #SBATCH --gres=gpu:v100:1
 #SBATCH --array=0-1
 
@@ -38,9 +38,9 @@ python -u gan.py \
 	--rgbDIR $datasetDIR \
 	--resDIR $resultsDIR \
 	--numWorkers $SLURM_CPUS_PER_TASK \
-	--lr 0.0003 \
+	--lr 0.0004 \
 	--nepochs 50 \
-	--batchSZ 8 \
+	--batchSZ 4 \
 	--ganMethodIdx $SLURM_ARRAY_TASK_ID \
 			
 done_txt="$user finished Slurm job: `date`"

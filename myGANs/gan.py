@@ -36,8 +36,8 @@ sys.dont_write_bytecode = True
 # DCGAN ref link: https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html#introduction
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--nepochs', type=int, default=6, help='training epochs')
-parser.add_argument('--batchSZ', type=int, default=8, help='input batch size')
+parser.add_argument('--nepochs', type=int, default=1, help='training epochs')
+parser.add_argument('--batchSZ', type=int, default=4, help='input batch size')
 parser.add_argument('--imgSZ', type=int, default=256, help='H & W input images') # can't change now!!
 parser.add_argument('--imgNumCh', type=int, default=3, help='Image channel(s), def: 3 RGB')
 parser.add_argument('--nz', type=int, default=100, help='noise latent z vector size')
@@ -130,6 +130,7 @@ dataloader = torch.utils.data.DataLoader(
 	batch_size=opt.batchSZ,
 	shuffle=True, 
 	num_workers=opt.numWorkers,
+	pin_memory=True,
 )
 print(f"dataset contans: {len(dataset)} images | dataloader with batch_size: {opt.batchSZ}: {len(dataloader)} batches")
 #visualize(dataloader=dataloader)
@@ -229,7 +230,8 @@ def train(init_gen_model=None, init_disc_model=None):
 			disc_loss_real = criterion(disc_real_pred, torch.ones_like(disc_real_pred))
 			
 			# train with fake generated images
-			fake_noise = torch.randn(cur_batch_size, opt.nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images			
+			# fake_noise = torch.randn(cur_batch_size, opt.nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images			
+			fake_noise = torch.randn(cur_batch_size, opt.nz, device=device) # [nb, 100]
 			fake = netG(fake_noise)
 			disc_fake_pred = netD(fake.detach())
 			disc_loss_fake = criterion(disc_fake_pred, torch.zeros_like(disc_fake_pred))
@@ -245,7 +247,8 @@ def train(init_gen_model=None, init_disc_model=None):
 			# (2) Update Generator network
 			##############################
 			netG.zero_grad()
-			fake_noise_2 = torch.randn(cur_batch_size, opt.nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
+			# fake_noise_2 = torch.randn(cur_batch_size, opt.nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
+			fake_noise_2 = torch.randn(cur_batch_size, opt.nz, device=device) # [nb, 100]
 			fake_2 = netG(fake_noise_2)
 			disc_fake_pred = netD(fake_2)
 			gen_loss = criterion(disc_fake_pred, torch.ones_like(disc_fake_pred))
@@ -335,7 +338,7 @@ def train(init_gen_model=None, init_disc_model=None):
 	return best_gen_model, best_disc_model
 
 def main():
-	init_gen_model, init_disc_model = get_gen_disc_models(device=device)
+	init_gen_model, init_disc_model = get_gen_disc_models(device=device)		
 	try:
 		model_gen = init_gen_model
 		model_disc = init_disc_model
