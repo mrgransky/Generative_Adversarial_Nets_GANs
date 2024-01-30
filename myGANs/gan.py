@@ -21,7 +21,11 @@ sys.dont_write_bytecode = True
 
 # how to run:
 # in Puhti:
+## dcgan:
 # python gan.py --rgbDIR /scratch/project_2004072/sentinel2-l1c_RGB_IMGs --resDIR /scratch/project_2004072/GANs/misc --lr 0.0002 --ganMethodIdx 0 --numWorkers 8 --nepochs 50 --batchSZ 8 --dispInterval 100
+
+## sngan:
+# python gan.py --rgbDIR /scratch/project_2004072/sentinel2-l1c_RGB_IMGs --resDIR /scratch/project_2004072/GANs/misc --lr 0.0002 --ganMethodIdx 1 --numWorkers 8 --nepochs 50 --batchSZ 4 --dispInterval 100
 
 # in Puota:
 # python gan.py --rgbDIR $HOME/datasets/sentinel2-l1c_RGB_IMGs --resDIR $HOME/trash_logs/GANs/misc --batchSZ 64
