@@ -27,16 +27,18 @@ python -u gan.py \
 	--numWorkers 24 \
 	--lr 0.0003 \
 	--nepochs 50 \
-	--batchSZ 4 \
+	--batchSZ 8 \
+	--cudaNum 1 \
 	--ganMethodIdx 0 >>$HOME_DIR/trash_logs/GANs/gan_method_0.out 2>&1 &
 
 python -u gan.py \
 	--rgbDIR $datasetDIR \
 	--resDIR $resultsDIR \
-	--numWorkers 20 \
+	--numWorkers 24 \
 	--lr 0.0003 \
 	--nepochs 50 \
 	--batchSZ 8 \
+	--cudaNum 2 \
 	--ganMethodIdx 1 >>$HOME_DIR/trash_logs/GANs/gan_method_1.out 2>&1 &
 
 # Wait for both background jobs to finish

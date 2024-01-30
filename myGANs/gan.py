@@ -52,19 +52,20 @@ parser.add_argument('--rgbDIR', required=True, help='path to RGB dataset')
 
 parser.add_argument('--numWorkers', type=int, default=16, help='number of cpu core(s)')
 parser.add_argument('--nGPUs', type=int, default=1, help='number of GPU(s)') # torch.cuda.device_count()
+parser.add_argument('--cudaNum', type=int, default=0, help='CUDA') # torch.cuda.device_count()
 parser.add_argument('--ganMethodIdx', type=int, default=0, help='GAN method')
 
 opt = parser.parse_args()
 
-if torch.cuda.is_available() and torch.cuda.device_count() > 1:
-	device = torch.device(f"cuda:{opt.ganMethodIdx}")
-elif torch.cuda.is_available() and torch.cuda.device_count() < 2:
-	device = torch.device(f"cuda")
-else:
-	device = torch.device("cpu")
+# if torch.cuda.is_available() and torch.cuda.device_count() > 1:
+# 	device = torch.device(f"cuda:{opt.ganMethodIdx}")
+# elif torch.cuda.is_available() and torch.cuda.device_count() < 2:
+# 	device = torch.device(f"cuda")
+# else:
+# 	device = torch.device("cpu")
 
+device = torch.device(f"cuda:{opt.cudaNum}") if torch.cuda.is_available() else torch.device("cpu")
 print(f">> Running Using device: {device}")
-# device = torch.device(f"cuda:{}") if torch.cuda.is_available() else torch.device("cpu")
 
 cudnn.benchmark: bool = True
 display_step: int = 500
@@ -79,7 +80,7 @@ opt.resDIR += f"_latent_noise_SZ_{opt.nz}"
 opt.resDIR += f"_lr_{opt.lr}"
 opt.resDIR += f"_feature_g_{opt.feature_g}"
 opt.resDIR += f"_feature_d_{opt.feature_d}"
-opt.resDIR += f"_device_{device}"
+opt.resDIR += f"_device_{device.replace(':', '')}"
 opt.resDIR += f"_ngpu_{opt.nGPUs}"
 opt.resDIR += f"_display_step_{display_step}"
 opt.resDIR += f"_numWorkers_{opt.numWorkers}"
@@ -191,7 +192,7 @@ def train(init_gen_model=None, init_disc_model=None):
 		netG = init_gen_model		
 		netD = init_disc_model
 	else:
-		netG, netD = get_gen_disc_models()
+		netG, netD = get_gen_disc_models(device=device)
 
 	netD.apply(weights_init)
 	netG.apply(weights_init)
@@ -337,7 +338,7 @@ def train(init_gen_model=None, init_disc_model=None):
 	return best_gen_model, best_disc_model
 
 def main():
-	init_gen_model, init_disc_model = get_gen_disc_models()
+	init_gen_model, init_disc_model = get_gen_disc_models(device=device)
 	try:
 		model_gen = init_gen_model
 		model_disc = init_disc_model
