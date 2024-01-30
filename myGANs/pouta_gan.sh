@@ -16,28 +16,30 @@ echo "HOME DIR $HOME_DIR"
 
 datasetDIR="$HOME_DIR/datasets/sentinel2-l1c_RGB_IMGs"
 resultsDIR="$HOME_DIR/trash_logs/GANs/misc" ########## must be adjusted! ##########
-
-# Activate Conda environment
+nW=24
+batch_size=8
+nEpochs=50
+learning_rate=0.0003
 source $HOME_DIR/miniconda3/bin/activate py39
 
-# # Run both commands simultaneously
+# Run both commands simultaneously
 python -u gan.py \
 	--rgbDIR $datasetDIR \
 	--resDIR $resultsDIR \
-	--numWorkers 24 \
-	--lr 0.0003 \
-	--nepochs 50 \
-	--batchSZ 8 \
+	--numWorkers $nW \
+	--lr $learning_rate \
+	--nepochs $nEpochs \
+	--batchSZ $batch_size \
 	--cudaNum 1 \
 	--ganMethodIdx 0 >>$HOME_DIR/trash_logs/GANs/gan_method_0.out 2>&1 &
 
 python -u gan.py \
 	--rgbDIR $datasetDIR \
 	--resDIR $resultsDIR \
-	--numWorkers 24 \
-	--lr 0.0003 \
-	--nepochs 50 \
-	--batchSZ 8 \
+	--numWorkers $nW \
+	--lr $learning_rate \
+	--nepochs $nEpochs \
+	--batchSZ $batch_size \
 	--cudaNum 2 \
 	--ganMethodIdx 1 >>$HOME_DIR/trash_logs/GANs/gan_method_1.out 2>&1 &
 

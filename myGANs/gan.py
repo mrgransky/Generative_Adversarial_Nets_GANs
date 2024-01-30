@@ -21,13 +21,13 @@ sys.dont_write_bytecode = True
 
 # how to run:
 # in Puhti:
-# python dcgan.py --rgbDIR /scratch/project_2004072/sentinel2-l1c_RGB_IMGs --resDIR /scratch/project_2004072/GANs/misc_dcgan
+# python gan.py --rgbDIR /scratch/project_2004072/sentinel2-l1c_RGB_IMGs --resDIR /scratch/project_2004072/GANs/misc --lr 0.0002 --ganMethodIdx 0 --numWorkers 8 --nepochs 50 --batchSZ 8 --dispInterval 100
 
 # in Puota:
-# python dcgan.py --rgbDIR $HOME/datasets/sentinel2-l1c_RGB_IMGs --resDIR $HOME/trash_logs/GANs/misc --batchSZ 64
+# python gan.py --rgbDIR $HOME/datasets/sentinel2-l1c_RGB_IMGs --resDIR $HOME/trash_logs/GANs/misc --batchSZ 64
 
 # in Local laptop:
-# python dcgan.py --rgbDIR /home/farid/datasets/sentinel2-l1c_RGB_IMGs --resDIR /home/farid/datasets/GANs_results/misc
+# python gan.py --rgbDIR /home/farid/datasets/sentinel2-l1c_RGB_IMGs --resDIR /home/farid/datasets/GANs_results/misc
 
 # DCGAN ref link: https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html#introduction
 
@@ -54,21 +54,14 @@ parser.add_argument('--numWorkers', type=int, default=16, help='number of cpu co
 parser.add_argument('--nGPUs', type=int, default=1, help='number of GPU(s)') # torch.cuda.device_count()
 parser.add_argument('--cudaNum', type=int, default=0, help='CUDA') # torch.cuda.device_count()
 parser.add_argument('--ganMethodIdx', type=int, default=0, help='GAN method')
+parser.add_argument('--dispInterval', type=int, default=500, help='Display Interval')
 
 opt = parser.parse_args()
-
-# if torch.cuda.is_available() and torch.cuda.device_count() > 1:
-# 	device = torch.device(f"cuda:{opt.ganMethodIdx}")
-# elif torch.cuda.is_available() and torch.cuda.device_count() < 2:
-# 	device = torch.device(f"cuda")
-# else:
-# 	device = torch.device("cpu")
 
 device = torch.device(f"cuda:{opt.cudaNum}") if torch.cuda.is_available() else torch.device("cpu")
 print(f">> Running Using device: {device}")
 
 cudnn.benchmark: bool = True
-display_step: int = 500
 
 GAN_METHODs: List[str] = ["dcgan", "sngan", "wgan"]
 
@@ -82,7 +75,7 @@ opt.resDIR += f"_feature_g_{opt.feature_g}"
 opt.resDIR += f"_feature_d_{opt.feature_d}"
 opt.resDIR += f"_device_{device}"
 opt.resDIR += f"_ngpu_{opt.nGPUs}"
-opt.resDIR += f"_display_step_{display_step}"
+opt.resDIR += f"_display_step_{opt.dispInterval}"
 opt.resDIR += f"_numWorkers_{opt.numWorkers}"
 
 if GAN_METHODs[opt.ganMethodIdx] == "sngan":
@@ -186,7 +179,7 @@ def test(dataloader, gen, disc, latent_noise_dim: int=100, device: str="cuda"):
 		print(f"FID: {fid:.3f}")
 
 def train(init_gen_model=None, init_disc_model=None):
-	print(f"Train with {opt.nGPUs} GPU(s) cuda:{torch.cuda.current_device()} | {opt.numWorkers} CPU core(s)".center(100, " "))
+	print(f"Train with {opt.nGPUs} GPU(s) {device} | {opt.numWorkers} CPU core(s)".center(100, " "))
 
 	if init_gen_model and init_disc_model:
 		netG = init_gen_model		
@@ -260,7 +253,7 @@ def train(init_gen_model=None, init_disc_model=None):
 			disc_losses.append(disc_loss.item())
 			gen_losses.append(gen_loss.item())
 
-			if ((batch_idx+1) % display_step == 0) or (batch_idx+1 == len(dataloader)):
+			if ((batch_idx+1) % opt.dispInterval == 0) or (batch_idx+1 == len(dataloader)):
 				print(
 					f"Epoch {epoch+1}/{opt.nepochs} Batch {batch_idx+1}/{len(dataloader)} "
 					f"D_loss[batch]: {disc_loss.item():.3f} G_loss[batch]: {gen_loss.item():.3f} "
