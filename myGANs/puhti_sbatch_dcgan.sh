@@ -34,15 +34,15 @@ echo "$SLURM_CLUSTER_NAME venv from tykky module..."
 datasetDIR="/scratch/project_2004072/sentinel2-l1c_RGB_IMGs"
 resultsDIR="/scratch/project_2004072/GANs/misc" ########## must be adjusted! ##########
 
-python -u dcgan.py \
-					--rgbDIR $datasetDIR \
-					--resDIR $resultsDIR \
-					--numWorkers $SLURM_CPUS_PER_TASK \
-					--lr 0.0003 \
-					--nepochs 50 \
-					--batchSZ 8 \
-					--ganMethodIdx $SLURM_ARRAY_TASK_ID \
-				
+python -u gan.py \
+	--rgbDIR $datasetDIR \
+	--resDIR $resultsDIR \
+	--numWorkers $SLURM_CPUS_PER_TASK \
+	--lr 0.0003 \
+	--nepochs 50 \
+	--batchSZ 8 \
+	--ganMethodIdx $SLURM_ARRAY_TASK_ID \
+			
 done_txt="$user finished Slurm job: `date`"
 echo -e "${done_txt//?/$ch}\n${done_txt}\n${done_txt//?/$ch}"
 # echo "${stars// /*}"
