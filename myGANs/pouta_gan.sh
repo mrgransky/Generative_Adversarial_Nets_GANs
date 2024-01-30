@@ -33,46 +33,27 @@ source $HOME_DIR/miniconda3/bin/activate py39
 # 		--ganMethodIdx $gan_idx >>$HOME_DIR/trash_logs/GANs/gan_method_$gan_idx.out 2>&1
 # done
 
-# # Run both commands simultaneously
-python -u gan.py \
-	--rgbDIR $datasetDIR \
-	--resDIR $resultsDIR \
-	--numWorkers 20 \
-	--lr 0.0003 \
-	--nepochs 50 \
-	--batchSZ 8 \
-	--ganMethodIdx 0 >>$HOME_DIR/trash_logs/GANs/gan_method_0.out 2>&1 &
+# # # Run both commands simultaneously
+# python -u gan.py \
+# 	--rgbDIR $datasetDIR \
+# 	--resDIR $resultsDIR \
+# 	--numWorkers 20 \
+# 	--lr 0.0003 \
+# 	--nepochs 50 \
+# 	--batchSZ 8 \
+# 	--ganMethodIdx 0 >>$HOME_DIR/trash_logs/GANs/gan_method_0.out 2>&1 &
 
-python -u gan.py \
-	--rgbDIR $datasetDIR \
-	--resDIR $resultsDIR \
-	--numWorkers 20 \
-	--lr 0.0003 \
-	--nepochs 50 \
-	--batchSZ 8 \
-	--ganMethodIdx 1 >>$HOME_DIR/trash_logs/GANs/gan_method_1.out 2>&1 &
+# python -u gan.py \
+# 	--rgbDIR $datasetDIR \
+# 	--resDIR $resultsDIR \
+# 	--numWorkers 20 \
+# 	--lr 0.0003 \
+# 	--nepochs 50 \
+# 	--batchSZ 8 \
+# 	--ganMethodIdx 1 >>$HOME_DIR/trash_logs/GANs/gan_method_1.out 2>&1 &
 
-# Wait for both background jobs to finish
-wait
-
-
-# # Define a function for your command
-# run_gan() {
-# 		python -u gan.py \
-# 				--rgbDIR $datasetDIR \
-# 				--resDIR $resultsDIR \
-# 				--numWorkers 16 \
-# 				--lr 0.0003 \
-# 				--nepochs 50 \
-# 				--batchSZ 8 \
-# 				--ganMethodIdx $1 >>$HOME_DIR/trash_logs/GANs/gan_method_$1.out 2>&1
-# }
-
-# # Export the function so that it's available to GNU Parallel
-# export -f run_gan
-
-# # Run the function for each index in parallel
-# seq 0 1 | parallel run_gan {}
+# # Wait for both background jobs to finish
+# wait
 
 # Run the commands in parallel
 echo "0 1" | parallel -j 2 "python -u gan.py \
