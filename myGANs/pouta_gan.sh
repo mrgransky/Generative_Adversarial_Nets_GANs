@@ -1,5 +1,8 @@
 #!/bin/bash
 
+## run using command:
+## $ nohup bash pouta_gan.sh > /dev/null 2>&1 &
+
 user="`whoami`"
 stars=$(printf '%*s' 100 '')
 txt="$user began Slurm job: `date`"
@@ -28,9 +31,6 @@ source $HOME_DIR/miniconda3/bin/activate py39
 # 		--batchSZ 8 \
 # 		--ganMethodIdx $gan_idx >>$HOME_DIR/trash_logs/GANs/gan_method_$gan_idx.out 2>&1
 # done
-
-## run using command:
-## $ nohup bash pouta_gan.sh > /dev/null 2>&1 &
 
 # # Run both commands simultaneously
 # python -u gan.py \
