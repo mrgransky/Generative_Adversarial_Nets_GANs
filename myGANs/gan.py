@@ -63,6 +63,7 @@ elif torch.cuda.is_available() and torch.cuda.device_count() < 2:
 else:
 	device = torch.device("cpu")
 
+print(f">> Running Using device: {device}")
 # device = torch.device(f"cuda:{}") if torch.cuda.is_available() else torch.device("cpu")
 
 cudnn.benchmark: bool = True
