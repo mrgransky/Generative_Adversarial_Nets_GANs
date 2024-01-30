@@ -56,15 +56,14 @@ source $HOME_DIR/miniconda3/bin/activate py39
 # wait
 
 # Run the commands in parallel
-echo "0 1" | parallel -j 2 "python -u gan.py \
+echo "0 1" | parallel -j 2 python -u gan.py \
 	--rgbDIR $datasetDIR \
 	--resDIR $resultsDIR \
 	--numWorkers 20 \
 	--lr 0.0003 \
 	--nepochs 50 \
 	--batchSZ 8 \
-	--ganMethodIdx {} >> $HOME_DIR/trash_logs/GANs/gan_method_{}.out 2>&1"
-
+	--ganMethodIdx {} >> $HOME_DIR/trash_logs/GANs/gan_method_{}.out 2>&1
 
 done_txt="$user finished Slurm job: `date`"
 echo -e "${done_txt//?/$ch}\n${done_txt}\n${done_txt//?/$ch}"
