@@ -26,7 +26,7 @@ do
 		--lr 0.0003 \
 		--nepochs 50 \
 		--batchSZ 8 \
-		--ganMethodIdx $gan_idx > $resultsDIR/gan_method_$gan_idx.out 2>&1
+		--ganMethodIdx $gan_idx > $HOME_DIR/trash_logs/GANs/gan_method_$gan_idx.out 2>&1
 done
 
 done_txt="$user finished Slurm job: `date`"
