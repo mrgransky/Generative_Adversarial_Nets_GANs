@@ -56,7 +56,15 @@ parser.add_argument('--ganMethodIdx', type=int, default=0, help='GAN method')
 
 opt = parser.parse_args()
 
-device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+if torch.cuda.is_available() and torch.cuda.device_count() > 1:
+	device = torch.device(f"cuda:{opt.ganMethodIdx}")
+elif torch.cuda.is_available() and torch.cuda.device_count() < 2:
+	device = torch.device(f"cuda")
+else:
+	device = torch.device("cpu")
+
+# device = torch.device(f"cuda:{}") if torch.cuda.is_available() else torch.device("cpu")
+
 cudnn.benchmark: bool = True
 display_step: int = 500
 
@@ -126,7 +134,6 @@ dataloader = torch.utils.data.DataLoader(
 )
 print(f"dataset contans: {len(dataset)} images | dataloader with batch_size: {opt.batchSZ}: {len(dataloader)} batches")
 #visualize(dataloader=dataloader)
-# sys.exit(0)
 
 def get_gen_disc_models(device: str="cuda"):
 	print(f"Generator [spectral_norm: {opt.spectralNormGen}]".center(120, "-"))
@@ -177,7 +184,7 @@ def test(dataloader, gen, disc, latent_noise_dim: int=100, device: str="cuda"):
 		print(f"FID: {fid:.3f}")
 
 def train(init_gen_model=None, init_disc_model=None):
-	print(f"Training with {opt.nGPUs} GPU(s) & {opt.numWorkers} CPU core(s)".center(100, " "))
+	print(f"Train with {opt.nGPUs} GPU(s) cuda:{torch.cuda.current_device()} | {opt.numWorkers} CPU core(s)".center(100, " "))
 
 	if init_gen_model and init_disc_model:
 		netG = init_gen_model		
