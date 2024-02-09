@@ -94,9 +94,8 @@ def weights_init(m): # zero-centered Normal distribution with std 0.02.
 # 		return output.view(-1, 1).squeeze(1) # Removes singleton dimension (dimension with size 1)
 
 class Generator(nn.Module):
-	def __init__(self, ngpu: int = 1, nz: int = 100, feature_g: int = 256, nCh: int = 3, spectral_norm: bool = False):
+	def __init__(self, nz: int = 100, feature_g: int = 256, nCh: int = 3, spectral_norm: bool = False):
 		super(Generator, self).__init__()
-		self.ngpu = ngpu
 		self.spectral_norm = spectral_norm
 
 		layers = [
@@ -140,16 +139,6 @@ class Generator(nn.Module):
 
 		self.main = nn.Sequential(*layers)
 
-	# def forward(self, input):
-	# 	if input.is_cuda and self.ngpu > 1:
-	# 		output = torch.nn.parallel.data_parallel(self.main, input, range(self.ngpu))
-	# 	else:
-	# 		print(input.shape, type(input), input.dtype, input.device)
-	# 		output = self.main(input)  # [nb, ch, 256, 256]
-	# 		print(output.shape, type(output), output.dtype, output.device)
-	# 		print()
-	# 	return output
-
 	def forward(self, input_noise):
 		# print(input_noise.shape, type(input_noise), input_noise.dtype, input_noise.device)
 		out = self.main(input_noise.view(input_noise.size(0), -1, 1, 1))
@@ -158,9 +147,8 @@ class Generator(nn.Module):
 		return out
 
 class Discriminator(nn.Module):
-	def __init__(self, ngpu: int = 1, feature_d: int = 256, nCh: int = 3, spectral_norm: bool = False):
+	def __init__(self, feature_d: int = 256, nCh: int = 3, spectral_norm: bool = False):
 		super(Discriminator, self).__init__()
-		self.ngpu = ngpu
 		self.spectral_norm = spectral_norm
 
 		layers = [
@@ -189,15 +177,49 @@ class Discriminator(nn.Module):
 		self.main = nn.Sequential(*layers)
 
 	def forward(self, img):
+		# print(img.shape, type(img), img.dtype, img.device)
+		disc_pred = self.main(img)
+		# print(disc_pred.shape, type(disc_pred), disc_pred.dtype, disc_pred.device)
+		output = disc_pred.view(len(disc_pred), -1) # [nb, (ch * h * w)] # ch, h, w are NOT img channels, height, width
+		# print(output.shape, type(output), output.dtype, output.device)
+		# print()
+		return output
+
+class Critic(nn.Module):
+	def __init__(self, feature_d: int = 256, nCh: int = 3, spectral_norm: bool = True):
+		super(Critic, self).__init__()
+		self.spectral_norm = spectral_norm
+
+		layers = [
+			nn.Conv2d(in_channels=nCh, out_channels=feature_d, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.LeakyReLU(negative_slope=0.2, inplace=True),
+
+			nn.Conv2d(in_channels=feature_d, out_channels=feature_d * 2, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.InstanceNorm2d(num_features=feature_d * 2, affine=True),
+			nn.LeakyReLU(negative_slope=0.2, inplace=True),
+
+			nn.Conv2d(in_channels=feature_d * 2, out_channels=feature_d * 4, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.InstanceNorm2d(num_features=feature_d * 4, affine=True),
+			nn.LeakyReLU(negative_slope=0.2, inplace=True),
+
+			nn.Conv2d(in_channels=feature_d * 4, out_channels=feature_d * 8, kernel_size=4, stride=2, padding=1, bias=False),
+			nn.InstanceNorm2d(num_features=feature_d * 8, affine=True),
+			nn.LeakyReLU(negative_slope=0.2, inplace=True),
+
+			# Final output layer (no activation) in WGAN-GP
+			nn.Conv2d(in_channels=feature_d * 8, out_channels=1, kernel_size=4, stride=1, padding=0, bias=False),
+		]
+
+		if self.spectral_norm:
+			layers = [nn.utils.spectral_norm(layer) if isinstance(layer, nn.Conv2d) else layer for layer in layers]
+
+		self.main = nn.Sequential(*layers)
+
+	def forward(self, img):
 		print(img.shape, type(img), img.dtype, img.device)
 		disc_pred = self.main(img)
 		print(disc_pred.shape, type(disc_pred), disc_pred.dtype, disc_pred.device)
-		output = disc_pred.view(len(disc_pred), -1)
+		output = disc_pred.view(len(disc_pred), -1) # [nb, (ch * h * w)] # ch, h, w are NOT img channels, height, width
 		print(output.shape, type(output), output.dtype, output.device)
 		print()
 		return output
-		# if img.is_cuda and self.ngpu > 1:
-		# 	output = nn.parallel.data_parallel(self.main, img, range(self.ngpu))
-		# else:
-		# 	output = self.main(img)
-		# return output.view(-1, 1).squeeze(1)  # Removes singleton dimension (dimension with size 1)

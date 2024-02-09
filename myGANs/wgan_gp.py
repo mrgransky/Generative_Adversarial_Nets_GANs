@@ -51,7 +51,6 @@ parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. de
 
 parser.add_argument('--spectralNormGen', type=bool, default=False, help='Spectrally Normalized Generator')
 parser.add_argument('--spectralNormDisc', type=bool, default=False, help='Spectrally Normalized Discriminator')
-parser.add_argument('--spectralNormCritic', type=bool, default=False, help='Spectrally Normalized Critic')
 
 parser.add_argument('--resDIR', required=True, help='folder to output images and model checkpoints')
 parser.add_argument('--rgbDIR', required=True, help='path to RGB dataset')
@@ -112,25 +111,6 @@ os.makedirs(models_dir, exist_ok=True)
 # Specify the custom directory for PyTorch cache
 os.environ['TORCH_HOME'] = models_dir
 
-NETWORKS = {
-	"generator": Generator(
-		nz=int(opt.nz),
-		feature_g=int(opt.feature_g), 
-		nCh=int(opt.imgNumCh),
-		spectral_norm = opt.spectralNormGen,
-	),
-	"discriminator": Discriminator(
-		feature_d=int(opt.feature_d), 
-		nCh=int(opt.imgNumCh),
-		spectral_norm = opt.spectralNormDisc,
-	),
-	"critic": Critic(
-		feature_d=int(opt.feature_d), # feature_d = feature_critic
-		nCh=int(opt.imgNumCh),
-		spectral_norm = opt.spectralNormCritic,
-	),
-}
-
 if os.path.expanduser('~') == "/users/alijanif":
 	dataset_dir = "/scratch/project_2004072" # scratch folder in my puhti account!
 	nc_files_path = os.path.join(dataset_dir, 'sentinel2-l1c-random-rgb-image')
@@ -156,15 +136,12 @@ dataloader = torch.utils.data.DataLoader(
 print(f"dataset contans: {len(dataset)} images | dataloader with batch_size: {opt.batchSZ}: {len(dataloader)} batches")
 #visualize(dataloader=dataloader)
 
-def get_network_(netName: str="generator", device: str="cuda:0"):
-	print(f"Loading Network: {netName.title()}".center(120, "-"))
-	net = NETWORKS.get(netName).to(device)
-	get_param_(model=net)
-	return net
 
-def get_gen_disc_models(device: str="cuda:0"):
+
+def get_gen_disc_models(device: str="cuda"):
 	print(f"Generator [spectral_norm: {opt.spectralNormGen}]".center(120, "-"))
 	model_generator = Generator(
+		ngpu=opt.nGPUs, 
 		nz=int(opt.nz), 
 		feature_g=int(opt.feature_g), 
 		nCh=int(opt.imgNumCh),
@@ -174,6 +151,7 @@ def get_gen_disc_models(device: str="cuda:0"):
 	
 	print(f"Discriminator [spectral_norm: {opt.spectralNormDisc}]".center(120, "-"))
 	model_discriminator = Discriminator(
+		ngpu=opt.nGPUs, 
 		feature_d=int(opt.feature_d), 
 		nCh=int(opt.imgNumCh),
 		spectral_norm = opt.spectralNormDisc,
@@ -215,9 +193,7 @@ def train(init_gen_model=None, init_disc_model=None):
 		netG = init_gen_model		
 		netD = init_disc_model
 	else:
-		# netG, netD = get_gen_disc_models(device=device)
-		netG = get_network_(netName="generator", device=device)
-		netD = get_network_(netName="discriminator", device=device)
+		netG, netD = get_gen_disc_models(device=device)
 
 	netD.apply(weights_init)
 	netG.apply(weights_init)
@@ -367,10 +343,7 @@ def train(init_gen_model=None, init_disc_model=None):
 	return best_gen_model, best_disc_model
 
 def main():
-	# init_gen_model, init_disc_model = get_gen_disc_models(device=device)
-	init_gen_model = get_network_(netName="generator", device=device)
-	init_disc_model = get_network_(netName="discriminator", device=device)
-	
+	init_gen_model, init_disc_model = get_gen_disc_models(device=device)
 	try:
 		model_gen = init_gen_model
 		model_disc = init_disc_model
