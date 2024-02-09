@@ -33,7 +33,7 @@ python -u gan.py \
 	--nepochs $nEpochs \
 	--batchSZ $batch_size \
 	--cudaNum 1 \
-	--ganMethodIdx 0 >>$WDIR/trash/GANs/gan_method_0.out 2>&1 &
+	--ganMethodIdx 0 >>$WDIR/trash/GANs/gan_MTHD_0.out 2>&1 &
 
 python -u gan.py \
 	--rgbDIR $datasetDIR \
@@ -43,7 +43,7 @@ python -u gan.py \
 	--nepochs $nEpochs \
 	--batchSZ $batch_size \
 	--cudaNum 2 \
-	--ganMethodIdx 1 >>$WDIR/trash/GANs/gan_method_1.out 2>&1 &
+	--ganMethodIdx 1 >>$WDIR/trash/GANs/gan_MTHD_1.out 2>&1 &
 
 # Wait for both background jobs to finish
 wait
