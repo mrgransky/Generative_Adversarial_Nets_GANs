@@ -28,7 +28,7 @@ sys.dont_write_bytecode = True
 # python gan.py --rgbDIR /scratch/project_2004072/sentinel2-l1c_RGB_IMGs --resDIR /scratch/project_2004072/GANs/misc --lr 0.0002 --ganMethodIdx 1 --numWorkers 8 --nepochs 50 --batchSZ 4 --dispInterval 100
 
 # in Puota:
-# python gan.py --rgbDIR $HOME/datasets/sentinel2-l1c_RGB_IMGs --resDIR $HOME/trash_logs/GANs/misc --batchSZ 64
+# python gan.py --rgbDIR /media/volume/datasets/sentinel2-l1c_RGB_IMGs --resDIR /media/volume/trash/GANs/misc --batchSZ 64
 
 # in Local laptop:
 # python gan.py --rgbDIR /home/farid/datasets/sentinel2-l1c_RGB_IMGs --resDIR /home/farid/datasets/GANs_results/misc
@@ -218,25 +218,26 @@ def train(init_gen_model=None, init_disc_model=None):
 		mean_generator_loss = 0
 		for batch_idx, (batch_images, batch_images_names) in enumerate(dataloader):
 			# print(epoch+1, batch_idx, type(batch_images), batch_images.shape, batch_images_names)
-			##################################
-			# (1) Update Discriminator network 
-			##################################
+			################################################################################
+			# (1) Update Discriminator network Ref: Generative Deep Learning Ch4: 
+			# https://www.oreilly.com/api/v2/epubs/9781492041931/files/assets/gedl_0407.png
+			################################################################################
 
-			# train with real images
+			# (1.1) Train Disc with real images
 			netD.zero_grad()
 			batch_images = batch_images.to(device)
 			cur_batch_size = batch_images.size(0)
 			disc_real_pred = netD(batch_images)
 			disc_loss_real = criterion(disc_real_pred, torch.ones_like(disc_real_pred))
 			
-			# train with fake generated images
-			# fake_noise = torch.randn(cur_batch_size, opt.nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images			
+			# (1.2) Train Disc with fake generated images
 			fake_noise = torch.randn(cur_batch_size, opt.nz, device=device) # [nb, 100]
-			fake = netG(fake_noise)
-			disc_fake_pred = netD(fake.detach())
+			# fake_noise = torch.randn(cur_batch_size, opt.nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images			
+			fake_samples = netG(fake_noise)
+			disc_fake_pred = netD(fake_samples.detach())
 			disc_loss_fake = criterion(disc_fake_pred, torch.zeros_like(disc_fake_pred))
 
-			disc_loss = 0.5 * (disc_loss_real + disc_loss_fake) # Discriminator loss of single batch
+			disc_loss = 0.5 * (disc_loss_real + disc_loss_fake) # Discriminator loss of single batch: average
 
 			mean_discriminator_loss += disc_loss.item()
 
@@ -246,11 +247,12 @@ def train(init_gen_model=None, init_disc_model=None):
 			##############################
 			# (2) Update Generator network
 			##############################
+
 			netG.zero_grad()
 			# fake_noise_2 = torch.randn(cur_batch_size, opt.nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
 			fake_noise_2 = torch.randn(cur_batch_size, opt.nz, device=device) # [nb, 100]
-			fake_2 = netG(fake_noise_2)
-			disc_fake_pred = netD(fake_2)
+			fake_samples_2 = netG(fake_noise_2)
+			disc_fake_pred = netD(fake_samples_2)
 			gen_loss = criterion(disc_fake_pred, torch.ones_like(disc_fake_pred))
 			gen_loss.backward()
 			optimizerG.step()
@@ -272,7 +274,7 @@ def train(init_gen_model=None, init_disc_model=None):
 					normalize=True,
 				)
 				vutils.save_image(
-					tensor=fake.detach(), 
+					tensor=fake_samples.detach(), 
 					fp=os.path.join(fake_imgs_dir, f"fake_samples_ep_{epoch+1}_batchIDX_{batch_idx+1}.png"), 
 					normalize=True,
 				)

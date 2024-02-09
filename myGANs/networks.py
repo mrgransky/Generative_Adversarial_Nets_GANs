@@ -188,9 +188,16 @@ class Discriminator(nn.Module):
 
 		self.main = nn.Sequential(*layers)
 
-	def forward(self, input):
-		if input.is_cuda and self.ngpu > 1:
-			output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
-		else:
-			output = self.main(input)
-		return output.view(-1, 1).squeeze(1)  # Removes singleton dimension (dimension with size 1)
+	def forward(self, img):
+		print(img.shape, type(img), img.dtype, img.device)
+		disc_pred = self.main(img)
+		print(disc_pred.shape, type(disc_pred), disc_pred.dtype, disc_pred.device)
+		output = disc_pred.view(len(disc_pred), -1)
+		print(output.shape, type(output), output.dtype, output.device)
+		print()
+		return output
+		# if img.is_cuda and self.ngpu > 1:
+		# 	output = nn.parallel.data_parallel(self.main, img, range(self.ngpu))
+		# else:
+		# 	output = self.main(img)
+		# return output.view(-1, 1).squeeze(1)  # Removes singleton dimension (dimension with size 1)
