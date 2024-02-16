@@ -54,7 +54,6 @@ parser.add_argument('--dispInterval', type=int, default=500, help='Display Inter
 opt = parser.parse_args()
 
 device = torch.device(f"cuda:{opt.cudaNum}") if torch.cuda.is_available() else torch.device("cpu")
-print(f">> Running Using device: {device}")
 
 cudnn.benchmark: bool = True
 
@@ -357,6 +356,8 @@ def train(init_gen_model=None, init_disc_model=None):
 	return best_gen_model, best_disc_model
 
 def main():
+	print(f"Running {__file__} Using device: {device}")
+
 	init_gen_model = get_network_(netName="generator", device=device)
 	init_disc_model = get_network_(netName="discriminator", device=device)
 	try:

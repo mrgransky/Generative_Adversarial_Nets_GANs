@@ -35,8 +35,8 @@ parser.add_argument('--feature_g', type=int, default=256)
 parser.add_argument('--feature_d', type=int, default=256)
 
 parser.add_argument('--lr', type=float, default=1e-4, help='learning rate (default: 1e-4)')
-parser.add_argument('--beta1', type=float, default=0.0, help='beta1 for adam. default=0.0')
-parser.add_argument('--beta2', type=float, default=0.9, help='beta2 for adam. default=0.9')
+parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
+parser.add_argument('--beta2', type=float, default=0.99, help='beta2 for adam. default=0.99')
 
 parser.add_argument('--spectralNormGen', type=bool, default=True, help='Spectrally Normalized Generator')
 parser.add_argument('--spectralNormCritic', type=bool, default=True, help='Spectrally Normalized Critic')
@@ -54,7 +54,6 @@ parser.add_argument('--dispInterval', type=int, default=500, help='Display Inter
 opt = parser.parse_args()
 
 device = torch.device(f"cuda:{opt.cudaNum}") if torch.cuda.is_available() else torch.device("cpu")
-print(f">> Running Using device: {device}")
 
 cudnn.benchmark: bool = True
 
@@ -65,7 +64,7 @@ opt.resDIR += f"_epoch_{opt.nepochs}"
 opt.resDIR += f"_batch_SZ_{opt.batchSZ}"
 opt.resDIR += f"_img_SZ_{opt.imgSZ}"
 opt.resDIR += f"_latent_noise_SZ_{opt.nz}"
-opt.resDIR += f"_lr_{opt.lr}"
+opt.resDIR += f"_lr_{opt.lr}_b1_{opt.beta1}_b2_{opt.beta2}" # optimizer params
 opt.resDIR += f"_feature_g_{opt.feature_g}"
 opt.resDIR += f"_feature_d_{opt.feature_d}"
 opt.resDIR += f"_device_{device}"
@@ -327,6 +326,8 @@ def train(init_gen_model=None, init_critic_model=None):
 	return best_gen_model, best_disc_model
 
 def main():
+	print(f"Running {__file__} Using device: {device}")
+
 	init_gen_model = get_network_(netName="generator", device=device)
 	init_critic_model = get_network_(netName="critic", device=device)
 	try:
@@ -336,7 +337,7 @@ def main():
 		model_critic.load_state_dict(torch.load(os.path.join(checkponts_dir, f"Critic_model_best.pth")))
 		print("Loaded best generator and critic models successfully.")
 	except Exception as e:
-		print(f"<!>\n{e}")
+		print(e)
 		model_gen, model_critic = train(init_gen_model, init_critic_model)
 
 	try:
@@ -346,7 +347,7 @@ def main():
 			loss_fname=os.path.join(metrics_dir, f"losses_iteration.png"),
 		)
 	except Exception as e:
-		print(f"<!>\n{e}")
+		print(e)
 
 	try:
 		plot_losses(
@@ -355,7 +356,7 @@ def main():
 			loss_fname=os.path.join(metrics_dir, f"mean_losses_epoch.png"),
 		)
 	except Exception as e:
-		print(f"<!> \n{e}")
+		print(e)
 
 	test(
 		dataloader=dataloader,

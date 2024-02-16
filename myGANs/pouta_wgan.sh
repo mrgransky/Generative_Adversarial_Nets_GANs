@@ -23,7 +23,7 @@ resultsDIR="$WDIR/trash/GANs/misc" ########## must be adjusted! ##########
 nW=24
 batch_size=4
 nEpochs=50
-learning_rate=0.0001
+learning_rate=0.0003
 
 # Run both commands simultaneously
 python -u wgan.py \
@@ -33,8 +33,8 @@ python -u wgan.py \
 	--lr $learning_rate \
 	--nepochs $nEpochs \
 	--batchSZ $batch_size \
-	--cudaNum 3 \
-	--wganMethodIdx 1 >>$WDIR/trash/GANs/wgan-gp.out 2>&1 &
+	--cudaNum 2 \
+	--wganMethodIdx 1 >>$WDIR/trash/GANs/wgan-gp_optim_vals.out 2>&1 &
 
 # python -u gan.py \
 # 	--rgbDIR $datasetDIR \
