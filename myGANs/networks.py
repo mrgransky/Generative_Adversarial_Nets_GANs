@@ -216,10 +216,10 @@ class Critic(nn.Module):
 		self.main = nn.Sequential(*layers)
 
 	def forward(self, img):
-		print(img.shape, type(img), img.dtype, img.device)
+		# print(img.shape, type(img), img.dtype, img.device)
 		disc_pred = self.main(img)
-		print(disc_pred.shape, type(disc_pred), disc_pred.dtype, disc_pred.device)
+		# print(disc_pred.shape, type(disc_pred), disc_pred.dtype, disc_pred.device)
 		output = disc_pred.view(len(disc_pred), -1) # [nb, (ch * h * w)] # ch, h, w are NOT img channels, height, width
-		print(output.shape, type(output), output.dtype, output.device)
-		print()
+		# print(output.shape, type(output), output.dtype, output.device)
+		# print()
 		return output

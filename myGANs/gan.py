@@ -14,6 +14,8 @@ import torch.backends.cudnn as cudnn
 from dataloader import *
 from utils import *
 from networks import *
+from test import *
+
 ##################################################
 # avoid __pycache__ # DON NOT DELETE THIS LINE!!!!
 sys.dont_write_bytecode = True 
@@ -69,7 +71,7 @@ print(f">> Running Using device: {device}")
 
 cudnn.benchmark: bool = True
 
-GAN_METHODs: List[str] = ["dcgan", "sngan", "wgan"]
+GAN_METHODs: List[str] = ["dcgan", "sngan"]
 
 opt.resDIR += f"_{GAN_METHODs[opt.ganMethodIdx]}"
 opt.resDIR += f"_epoch_{opt.nepochs}"
@@ -181,32 +183,32 @@ def get_gen_disc_models(device: str="cuda:0"):
 	get_param_(model=model_discriminator)
 	return model_generator, model_discriminator
 
-def test(dataloader, gen, disc, latent_noise_dim: int=100, device: str="cuda"):
-	print(f"Test with {device}, {opt.nGPUs} GPU(s) & {opt.numWorkers} CPU core(s)".center(100, " "))
-	gen.eval()
-	disc.eval()
+# def test(dataloader, gen, disc, latent_noise_dim: int=100, device: str="cuda"):
+# 	print(f"Test with {device}, {opt.nGPUs} GPU(s) & {opt.numWorkers} CPU core(s)".center(100, " "))
+# 	gen.eval()
+# 	disc.eval()
 
-	print(f"inception_v3 [weights: DEFAULT]".center(120, "-"))
-	inception_model = torchvision.models.inception_v3(weights="DEFAULT", progress=False).to(device)
-	inception_model.eval()
+# 	print(f"inception_v3 [weights: DEFAULT]".center(120, "-"))
+# 	inception_model = torchvision.models.inception_v3(weights="DEFAULT", progress=False).to(device)
+# 	inception_model.eval()
 
-	inception_model.fc = torch.nn.Identity() # remove fc or classification layer
-	get_param_(model=inception_model)
+# 	inception_model.fc = torch.nn.Identity() # remove fc or classification layer
+# 	get_param_(model=inception_model)
 
-	real_features_all, fake_features_all = get_real_fake_features(
-		dataloader=dataloader, 
-		model_generator=gen,
-		model_inception_v3=inception_model,
-		nz=latent_noise_dim,
-		device=device,
-	)
-	mu_fake = torch.mean(fake_features_all, axis=0)
-	mu_real = torch.mean(real_features_all, axis=0)
-	sigma_fake = get_covariance(features=fake_features_all)
-	sigma_real = get_covariance(features=real_features_all)
-	with torch.no_grad(): # avoid storing intermediate gradient values,
-		fid = frechet_distance(mu_real, mu_fake, sigma_real, sigma_fake).item()
-		print(f"FID: {fid:.3f}")
+# 	real_features_all, fake_features_all = get_real_fake_features(
+# 		dataloader=dataloader, 
+# 		model_generator=gen,
+# 		model_inception_v3=inception_model,
+# 		nz=latent_noise_dim,
+# 		device=device,
+# 	)
+# 	mu_fake = torch.mean(fake_features_all, axis=0)
+# 	mu_real = torch.mean(real_features_all, axis=0)
+# 	sigma_fake = get_covariance(features=fake_features_all)
+# 	sigma_real = get_covariance(features=real_features_all)
+# 	with torch.no_grad(): # avoid storing intermediate gradient values,
+# 		fid = frechet_distance(mu_real, mu_fake, sigma_real, sigma_fake).item()
+# 		print(f"FID: {fid:.3f}")
 
 def train(init_gen_model=None, init_disc_model=None):
 	print(f"Train with {opt.nGPUs} GPU(s) {device} | {opt.numWorkers} CPU core(s)".center(100, " "))
@@ -249,17 +251,18 @@ def train(init_gen_model=None, init_disc_model=None):
 			# (1) Update Discriminator network Ref: Generative Deep Learning Ch4: 
 			# https://www.oreilly.com/api/v2/epubs/9781492041931/files/assets/gedl_0407.png
 			################################################################################
+			real_samples = batch_images.to(device)
+			real_samples_names = batch_images_names
+			cur_batch_size = real_samples.size(0)
 
 			# (1.1) Train Disc with real images
-			netD.zero_grad()
-			batch_images = batch_images.to(device)
-			cur_batch_size = batch_images.size(0)
-			disc_real_pred = netD(batch_images)
+			# netD.zero_grad() # TODO: this can't be true!!!!!! 
+			optimizerD.zero_grad()
+			disc_real_pred = netD(real_samples)
 			disc_loss_real = criterion(disc_real_pred, torch.ones_like(disc_real_pred))
 			
 			# (1.2) Train Disc with fake generated images
 			fake_noise = torch.randn(cur_batch_size, opt.nz, device=device) # [nb, 100]
-			# fake_noise = torch.randn(cur_batch_size, opt.nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images			
 			fake_samples = netG(fake_noise)
 			disc_fake_pred = netD(fake_samples.detach())
 			disc_loss_fake = criterion(disc_fake_pred, torch.zeros_like(disc_fake_pred))
@@ -275,8 +278,8 @@ def train(init_gen_model=None, init_disc_model=None):
 			# (2) Update Generator network
 			##############################
 
-			netG.zero_grad()
-			# fake_noise_2 = torch.randn(cur_batch_size, opt.nz, 1, 1, device=device) # [nb, 100, 1, 1] # H&W (1x1) of generated images
+			# netG.zero_grad()
+			optimizerG.zero_grad()
 			fake_noise_2 = torch.randn(cur_batch_size, opt.nz, device=device) # [nb, 100]
 			fake_samples_2 = netG(fake_noise_2)
 			disc_fake_pred = netD(fake_samples_2)
@@ -294,9 +297,9 @@ def train(init_gen_model=None, init_disc_model=None):
 					f"Epoch {epoch+1}/{opt.nepochs} Batch {batch_idx+1}/{len(dataloader)} "
 					f"D_loss[batch]: {disc_loss.item():.3f} G_loss[batch]: {gen_loss.item():.3f} "
 				)
-				real_batch_img_names = f"{'_'.join(batch_images_names[:-1])}_{batch_images_names[-1].split('.')[0]}"
+				real_batch_img_names = f"{'_'.join(real_samples_names[:-1])}_{real_samples_names[-1].split('.')[0]}"
 				vutils.save_image(
-					tensor=batch_images, 
+					tensor=real_samples, 
 					fp=os.path.join(real_imgs_dir, f"epoch{epoch+1}_batchIDX_{batch_idx+1}_Real_IMGs_{real_batch_img_names.replace('.png', '')}.png"), 
 					normalize=True,
 				)
@@ -367,10 +370,8 @@ def train(init_gen_model=None, init_disc_model=None):
 	return best_gen_model, best_disc_model
 
 def main():
-	# init_gen_model, init_disc_model = get_gen_disc_models(device=device)
 	init_gen_model = get_network_(netName="generator", device=device)
 	init_disc_model = get_network_(netName="discriminator", device=device)
-	
 	try:
 		model_gen = init_gen_model
 		model_disc = init_disc_model
@@ -405,6 +406,8 @@ def main():
 		disc=model_disc,
 		latent_noise_dim=opt.nz,
 		device=device,
+		nGPUs=opt.nGPUs,
+		numWorkers=opt.numWorkers,
 	)
 
 if __name__ == '__main__':

@@ -19,25 +19,34 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams["savefig.bbox"] = 'tight'
 
-def gradient_penalty(critic, real, fake, device: str="cuda:0"):
-	BATCH_SIZE, C, H, W = real.shape
-	alpha = torch.rand((BATCH_SIZE, 1, 1, 1)).repeat(1, C, H, W).to(device)
-	interpolated_images = (real * alpha) + (fake * (1 - alpha))
+def get_critic_loss(real_pred, fake_pred, GP, LAMBDA: int=10):
+	critic_loss = torch.mean(fake_pred) - torch.mean(real_pred) + (GP * LAMBDA)
+	return critic_loss
 
-	# Calculate critic scores
-	mixed_scores = critic(interpolated_images)
+def get_generator_loss(fake_pred):
+	gen_loss = -1. * torch.mean(fake_pred)
+	return gen_loss
+
+def get_gradient_penalty(critic, real_samples, fake_samples, device: str="cuda:0"):
+	# Mix real_samples and fake_samples randomly between them.
+	alpha = torch.rand(len(real_samples), 1, 1, 1, device=device, requires_grad=True)
+	interpolated_samples = (real_samples * alpha) + (fake_samples * (1 - alpha))
+
+	# Forward pass through critic to calculate critic scores
+	interpolated_scores = critic(interpolated_samples)
 
 	# Take the gradient of the scores with respect to the images
 	gradient = torch.autograd.grad(
-		inputs=interpolated_images,
-		outputs=mixed_scores,
-		grad_outputs=torch.ones_like(mixed_scores),
-		create_graph=True,
+		inputs=interpolated_samples,
+		outputs=interpolated_scores,
+		grad_outputs=torch.ones_like(interpolated_scores, device=device),
+		create_graph=True, # backpropagating through computational graph later in training
 		retain_graph=True,
+		only_inputs=True, # gradients are only calculated for interpolated samples, not critic parameters
 	)[0]
 	gradient = gradient.view(gradient.shape[0], -1)
-	gradient_norm = gradient.norm(2, dim=1)
-	gradient_penalty = torch.mean((gradient_norm - 1) ** 2)
+	gradient_norm = gradient.norm(2, dim=1) # L2-norm of gradients along dim=1, returns tensor with one value per sample
+	gradient_penalty = torch.mean((gradient_norm - 1)**2)
 	return gradient_penalty
 		
 def get_param_(model):

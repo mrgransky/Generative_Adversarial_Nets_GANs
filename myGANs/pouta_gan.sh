@@ -12,6 +12,8 @@ echo -e "${txt//?/$ch}\n${txt}\n${txt//?/$ch}"
 echo "${stars// /*}"
 
 HOME_DIR=$(echo $HOME)
+source $HOME_DIR/miniconda3/bin/activate py39
+
 WDIR="/media/volume"
 echo "HOME DIR $HOME_DIR | WDIR: $WDIR"
 # datasetDIR="$HOME_DIR/datasets/sentinel2-l1c_RGB_IMGs"
@@ -22,7 +24,6 @@ nW=24
 batch_size=4
 nEpochs=50
 learning_rate=0.0003
-source $HOME_DIR/miniconda3/bin/activate py39
 
 # Run both commands simultaneously
 python -u gan.py \
