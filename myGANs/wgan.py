@@ -1,18 +1,5 @@
-import argparse
-import os
-import sys
-import random
-
-import torch
-import torchvision
-
-import torch.utils.data
-import torchvision.transforms as transforms
-import torchvision.utils as vutils
-import torch.backends.cudnn as cudnn
-
-from dataloader import *
 from utils import *
+from dataloader import *
 from networks import *
 ##################################################
 # avoid __pycache__ # DON NOT DELETE THIS LINE!!!!
@@ -51,6 +38,7 @@ parser.add_argument('--beta2', type=float, default=0.9, help='beta2 for adam. de
 
 parser.add_argument('--spectralNormGen', type=bool, default=True, help='Spectrally Normalized Generator')
 parser.add_argument('--spectralNormCritic', type=bool, default=True, help='Spectrally Normalized Critic')
+parser.add_argument('--spectralNormDisc', type=bool, default=False, help='Spectrally Normalized Discriminator')
 
 parser.add_argument('--resDIR', required=True, help='folder to output images and model checkpoints')
 parser.add_argument('--rgbDIR', required=True, help='path to RGB dataset')
@@ -346,7 +334,7 @@ def main():
 		model_critic.load_state_dict(torch.load(os.path.join(checkponts_dir, f"Critic_model_best.pth")))
 		print("Loaded best generator and critic models successfully.")
 	except Exception as e:
-		print(f"<!> {e}")
+		print(f"<!>\n{e}")
 		model_gen, model_critic = train(init_gen_model, init_critic_model)
 
 	try:
@@ -356,7 +344,7 @@ def main():
 			loss_fname=os.path.join(metrics_dir, f"losses_iteration.png"),
 		)
 	except Exception as e:
-		print(f"<!> {e}")
+		print(f"<!>\n{e}")
 
 	try:
 		plot_losses(
@@ -365,7 +353,7 @@ def main():
 			loss_fname=os.path.join(metrics_dir, f"mean_losses_epoch.png"),
 		)
 	except Exception as e:
-		print(f"<!> {e}")
+		print(f"<!> \n{e}")
 
 	test(
 		dataloader=dataloader,
