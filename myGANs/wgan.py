@@ -28,7 +28,7 @@ sys.dont_write_bytecode = True
 # python wgan.py --rgbDIR /scratch/project_2004072/sentinel2-l1c_RGB_IMGs --resDIR /scratch/project_2004072/GANs/misc --lr 0.0002 --wganMethodIdx 1 --numWorkers 8 --nepochs 50 --batchSZ 4 --dispInterval 100
 
 # in Puota:
-# python wgan.py --rgbDIR /media/volume/datasets/sentinel2-l1c_RGB_IMGs --resDIR /media/volume/trash/GANs/misc --batchSZ 64
+# python wgan.py --rgbDIR /media/volume/datasets/sentinel2-l1c_RGB_IMGs --resDIR /media/volume/trash/GANs/misc --batchSZ 16 --cudaNum 3
 
 # in Local laptop:
 # python wgan.py --rgbDIR $HOME/datasets/sentinel2-l1c_RGB_IMGs --resDIR $HOME/datasets/GANs_results/misc

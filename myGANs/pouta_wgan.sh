@@ -1,8 +1,8 @@
 #!/bin/bash
 
 ## run using command:
-## $ nohup bash pouta_gan.sh > /dev/null 2>&1 &
-## $ nohup bash pouta_gan.sh > check_output.out 2>&1 & # with output saved in check_output.out
+## $ nohup bash pouta_wgan.sh > /dev/null 2>&1 &
+## $ nohup bash pouta_wgan.sh > check_output_wgan.out 2>&1 & # with output saved in check_output.out
 
 user="`whoami`"
 stars=$(printf '%*s' 100 '')
@@ -23,31 +23,31 @@ resultsDIR="$WDIR/trash/GANs/misc" ########## must be adjusted! ##########
 nW=24
 batch_size=4
 nEpochs=50
-learning_rate=0.0003
+learning_rate=0.0001
 
 # Run both commands simultaneously
-python -u gan.py \
+python -u wgan.py \
 	--rgbDIR $datasetDIR \
 	--resDIR $resultsDIR \
 	--numWorkers $nW \
 	--lr $learning_rate \
 	--nepochs $nEpochs \
 	--batchSZ $batch_size \
-	--cudaNum 1 \
-	--ganMethodIdx 0 >>$WDIR/trash/GANs/gan_MTHD_0.out 2>&1 &
+	--cudaNum 3 \
+	--wganMethodIdx 1 >>$WDIR/trash/GANs/wgan-gp.out 2>&1 &
 
-python -u gan.py \
-	--rgbDIR $datasetDIR \
-	--resDIR $resultsDIR \
-	--numWorkers $nW \
-	--lr $learning_rate \
-	--nepochs $nEpochs \
-	--batchSZ $batch_size \
-	--cudaNum 2 \
-	--ganMethodIdx 1 >>$WDIR/trash/GANs/gan_MTHD_1.out 2>&1 &
+# python -u gan.py \
+# 	--rgbDIR $datasetDIR \
+# 	--resDIR $resultsDIR \
+# 	--numWorkers $nW \
+# 	--lr $learning_rate \
+# 	--nepochs $nEpochs \
+# 	--batchSZ $batch_size \
+# 	--cudaNum 2 \
+# 	--ganMethodIdx 1 >>$WDIR/trash/GANs/gan_MTHD_1.out 2>&1 &
 
-# Wait for both background jobs to finish
-wait
+# # Wait for both background jobs to finish
+# wait
 
 done_txt="$user finished job: `date`"
 echo -e "${done_txt//?/$ch}\n${done_txt}\n${done_txt//?/$ch}"
