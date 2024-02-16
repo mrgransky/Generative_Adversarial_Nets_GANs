@@ -1,6 +1,8 @@
 from utils import *
 from dataloader import *
 from networks import *
+from test import *
+
 ##################################################
 # avoid __pycache__ # DON NOT DELETE THIS LINE!!!!
 sys.dont_write_bytecode = True 
