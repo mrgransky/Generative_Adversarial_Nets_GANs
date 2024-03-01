@@ -57,10 +57,10 @@ def get_gradient_penalty(critic, real_samples, fake_samples, zero_centered: bool
 
 	if zero_centered:
 		# Calculate the mean gradient
-    mean_gradient = torch.mean(gradient, dim=0)
+		mean_gradient = torch.mean(gradient, dim=0)
 
-    # Calculate the Zero-Centered Gradient Penalty
-    centered_gradient = gradient - mean_gradient.unsqueeze(0)
+		# Calculate the Zero-Centered Gradient Penalty
+		centered_gradient = gradient - mean_gradient.unsqueeze(0)
 
 		# replace centered_gradient with gradient
 		gradient = centered_gradient
