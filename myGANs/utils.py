@@ -35,7 +35,7 @@ def get_generator_loss(fake_pred):
 	gen_loss = -1. * torch.mean(fake_pred)
 	return gen_loss
 
-def get_gradient_penalty(critic, real_samples, fake_samples, device: str="cuda:0"):
+def get_gradient_penalty(critic, real_samples, fake_samples, zero_centered: bool=False, device: str="cuda:0"):
 	# Mix real_samples and fake_samples randomly between them.
 	alpha = torch.rand(len(real_samples), 1, 1, 1, device=device, requires_grad=True)
 	interpolated_samples = (real_samples * alpha) + (fake_samples * (1 - alpha))
@@ -52,9 +52,22 @@ def get_gradient_penalty(critic, real_samples, fake_samples, device: str="cuda:0
 		retain_graph=True,
 		only_inputs=True, # gradients are only calculated for interpolated samples, not critic parameters
 	)[0]
-	gradient = gradient.view(gradient.shape[0], -1)
+	batch_size = gradient.size(0)
+	gradient = gradient.view(batch_size, -1)
+
+	if zero_centered:
+		# Calculate the mean gradient
+    mean_gradient = torch.mean(gradient, dim=0)
+
+    # Calculate the Zero-Centered Gradient Penalty
+    centered_gradient = gradient - mean_gradient.unsqueeze(0)
+
+		# replace centered_gradient with gradient
+		gradient = centered_gradient
+
 	gradient_norm = gradient.norm(2, dim=1) # L2-norm of gradients along dim=1, returns tensor with one value per sample
 	gradient_penalty = torch.mean((gradient_norm - 1)**2)
+	
 	return gradient_penalty
 		
 def get_param_(model):

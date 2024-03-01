@@ -38,8 +38,9 @@ parser.add_argument('--lr', type=float, default=1e-4, help='learning rate (defau
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
 parser.add_argument('--beta2', type=float, default=0.99, help='beta2 for adam. default=0.99')
 
-parser.add_argument('--spectralNormGen', type=bool, default=True, help='Spectrally Normalized Generator')
-parser.add_argument('--spectralNormCritic', type=bool, default=True, help='Spectrally Normalized Critic')
+parser.add_argument('--zeroCenteredGP', type=bool, default=False, help='zero-centered gradient penalty (def: False)')
+parser.add_argument('--spectralNormGen', type=bool, default=False, help='Spectrally Normalized Generator')
+parser.add_argument('--spectralNormCritic', type=bool, default=False, help='Spectrally Normalized Critic')
 parser.add_argument('--spectralNormDisc', type=bool, default=False, help='Spectrally Normalized Discriminator')
 
 parser.add_argument('--resDIR', required=True, help='folder to output images and model checkpoints')
@@ -71,6 +72,10 @@ opt.resDIR += f"_device_{device}"
 opt.resDIR += f"_ngpu_{opt.nGPUs}"
 opt.resDIR += f"_display_step_{opt.dispInterval}"
 opt.resDIR += f"_numWorkers_{opt.numWorkers}"
+
+
+if opt.zeroCenteredGP:
+	opt.resDIR += f"_zeroCenteredGP_{opt.zeroCenteredGP}"
 
 if opt.spectralNormGen:
 	opt.resDIR += f"_spectralNormGen_{opt.spectralNormGen}"
@@ -215,6 +220,7 @@ def train(init_gen_model=None, init_critic_model=None):
 					critic=critic_net,
 					real_samples=real_samples,
 					fake_samples=fake_samples,
+					zero_centered=opt.zeroCenteredGP,
 					device=device,
 				)
 				critic_loss = get_critic_loss(

@@ -24,30 +24,24 @@ nW=24
 batch_size=4
 nEpochs=50
 learning_rate=0.0003
+zero_centered_GP=true
+spectral_norm_critic=true
+spectral_norm_generator=true
 
-# Run both commands simultaneously
+# python my_file.py --zeroCenteredGP $zero_centered_GP --spectralNormCritic $spectral_norm_critic
+
 python -u wgan.py \
 	--rgbDIR $datasetDIR \
 	--resDIR $resultsDIR \
 	--numWorkers $nW \
+	--zeroCenteredGP $zero_centered_GP \
+	--spectralNormCritic $spectral_norm_critic \
+	--spectralNormGen $spectral_norm_generator \
 	--lr $learning_rate \
 	--nepochs $nEpochs \
 	--batchSZ $batch_size \
 	--cudaNum 2 \
 	--wganMethodIdx 1 >>$WDIR/trash/GANs/wgan-gp_optim_vals.out 2>&1 &
-
-# python -u gan.py \
-# 	--rgbDIR $datasetDIR \
-# 	--resDIR $resultsDIR \
-# 	--numWorkers $nW \
-# 	--lr $learning_rate \
-# 	--nepochs $nEpochs \
-# 	--batchSZ $batch_size \
-# 	--cudaNum 2 \
-# 	--ganMethodIdx 1 >>$WDIR/trash/GANs/gan_MTHD_1.out 2>&1 &
-
-# # Wait for both background jobs to finish
-# wait
 
 done_txt="$user finished job: `date`"
 echo -e "${done_txt//?/$ch}\n${done_txt}\n${done_txt//?/$ch}"
