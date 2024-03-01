@@ -35,8 +35,8 @@ parser.add_argument('--feature_g', type=int, default=256)
 parser.add_argument('--feature_d', type=int, default=256)
 
 parser.add_argument('--lr', type=float, default=1e-4, help='learning rate (default: 1e-4)')
-parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
-parser.add_argument('--beta2', type=float, default=0.99, help='beta2 for adam. default=0.99')
+parser.add_argument('--beta1', type=float, default=0.0, help='beta1 for adam. default=0.5')
+parser.add_argument('--beta2', type=float, default=0.9, help='beta2 for adam. default=0.99')
 
 parser.add_argument('--zeroCenteredGP', type=bool, default=False, help='zero-centered gradient penalty (def: False)')
 parser.add_argument('--spectralNormGen', type=bool, default=False, help='Spectrally Normalized Generator')

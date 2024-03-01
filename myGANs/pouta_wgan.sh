@@ -23,7 +23,7 @@ resultsDIR="$WDIR/trash/GANs/misc" ########## must be adjusted! ##########
 nW=24
 batch_size=4
 nEpochs=50
-learning_rate=0.0003
+learning_rate=0.0001
 zero_centered_GP=true
 spectral_norm_critic=true
 spectral_norm_generator=true
@@ -41,7 +41,7 @@ python -u wgan.py \
 	--nepochs $nEpochs \
 	--batchSZ $batch_size \
 	--cudaNum 2 \
-	--wganMethodIdx 1 >>$WDIR/trash/GANs/wgan-gp_optim_vals.out 2>&1 &
+	--wganMethodIdx 1 >>$WDIR/trash/GANs/wgan-gp_zero_centered.out 2>&1 &
 
 done_txt="$user finished job: `date`"
 echo -e "${done_txt//?/$ch}\n${done_txt}\n${done_txt//?/$ch}"
