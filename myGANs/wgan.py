@@ -61,6 +61,8 @@ cudnn.benchmark: bool = True
 GAN_METHODs: List[str] = ["wgan", "wgan-gp"]
 
 opt.resDIR += f"_{GAN_METHODs[opt.wganMethodIdx]}"
+if opt.zeroCenteredGP:
+	opt.resDIR += f"_zeroCenteredGP_{opt.zeroCenteredGP}"
 opt.resDIR += f"_epoch_{opt.nepochs}"
 opt.resDIR += f"_batch_SZ_{opt.batchSZ}"
 opt.resDIR += f"_img_SZ_{opt.imgSZ}"
@@ -72,10 +74,6 @@ opt.resDIR += f"_device_{device}"
 opt.resDIR += f"_ngpu_{opt.nGPUs}"
 opt.resDIR += f"_display_step_{opt.dispInterval}"
 opt.resDIR += f"_numWorkers_{opt.numWorkers}"
-
-
-if opt.zeroCenteredGP:
-	opt.resDIR += f"_zeroCenteredGP_{opt.zeroCenteredGP}"
 
 if opt.spectralNormGen:
 	opt.resDIR += f"_spectralNormGen_{opt.spectralNormGen}"
